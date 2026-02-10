@@ -5,8 +5,8 @@ An API for modding MIO: Memories in Orbit
 
 - CMake 3.20 or higher
 - MSVC (Visual Studio 2019 or later)
-- vcpkg (optional but recommended)
-- Ninja (optional, for faster builds)
+- vcpkg
+- Ninja
   
 
 ## Building

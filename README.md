@@ -11,7 +11,7 @@ An API for modding MIO: Memories in Orbit
 
 ## Building
 
-### Using CMake Presets (Recommended)
+### Using CMake Presets
 ```powershell
 # Configure
 cmake --preset x64-release

@@ -4,7 +4,7 @@
 // API Version
 #define MODDING_API_VERSION_MAJOR 0
 #define MODDING_API_VERSION_MINOR 0
-#define MODDING_API_VERSION_PATCH 3
+#define MODDING_API_VERSION_PATCH 4
 
 // Export macro for API functions
 #ifdef MODDING_API_EXPORTS

@@ -1,0 +1,5 @@
+**/*output*
+.vscode
+header.txt
+*.dll
+*.lib

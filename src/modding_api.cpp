@@ -221,7 +221,7 @@ extern "C" {
 
     MODDING_API bool SetPlayerStamina(float stamina) {
         if (!ModAPI::g_PlayerStaminaAddr) {
-            return -1;
+            return false;
         }
 
         bool success = true;

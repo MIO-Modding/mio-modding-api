@@ -7,6 +7,8 @@
 namespace ModAPI {
     // Constant addresses
     void* g_PlayerStaminaAddr = nullptr;
+    void* g_PlayerVelocityXAddr = nullptr;
+    void* g_PlayerVelocityYAddr = nullptr;
 
     // Base address for pointer chain
     void** g_PlayerLocationBasePtr = nullptr;
@@ -149,6 +151,33 @@ extern "C" {
         return success;
     }
 
+    MODDING_API f32x2 GetPlayerVelocity() {
+        f32x2 vel = {-1.0f, -1.0f};
+
+        if (!ModAPI::g_PlayerVelocityXAddr || !ModAPI::g_PlayerVelocityYAddr) {
+            return vel;
+        }
+
+        
+
+        vel.x = *(float*)ModAPI::g_PlayerVelocityXAddr;
+        vel.y = *(float*)ModAPI::g_PlayerVelocityYAddr;
+
+        return vel;
+    }
+
+    MODDING_API bool SetPlayerVelocity(f32x2 velocity) {
+        if (!ModAPI::g_PlayerVelocityXAddr || !ModAPI::g_PlayerVelocityYAddr) {
+            return false;
+        }
+
+        bool success = true;
+        success &= WriteMemoryTyped(ModAPI::g_PlayerVelocityXAddr, velocity.x);
+        success &= WriteMemoryTyped(ModAPI::g_PlayerVelocityYAddr, velocity.y);
+
+        return success;
+    }
+
     MODDING_API int GetPlayerHealth() {
         if (!ModAPI::g_PlayerHealthBasePtr) {
             return -1;
@@ -253,6 +282,7 @@ extern "C" {
         uintptr_t playerLocationBasePtrAddr = baseAddr + 0x010EDF48;
         uintptr_t playerHealthBasePtrAddr = baseAddr + 0x010EE2E8;
         uintptr_t playerNacreBasePtrAddr = baseAddr + 0x01114AD0;
+        uintptr_t playerVelocityBasePtrAddr = baseAddr + 0x10EE00C8;
         
         // Store the address
         ModAPI::g_PlayerLocationBasePtr = (void**)playerLocationBasePtrAddr;
@@ -260,6 +290,8 @@ extern "C" {
         ModAPI::g_PlayerNacreBasePtr = (void**)playerNacreBasePtrAddr;
 
         ModAPI::g_PlayerStaminaAddr = (void*)(baseAddr + 0x110F9A8);
+        ModAPI::g_PlayerVelocityXAddr = (void*)(baseAddr + 0x10EE00C8);
+        ModAPI::g_PlayerVelocityYAddr = (void*)(baseAddr + 0x10EE00CC);
         
         char msg[256];
         sprintf_s(msg, "Found player base pointer at: 0x%p", (void*)playerLocationBasePtrAddr);

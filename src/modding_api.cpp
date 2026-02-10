@@ -290,8 +290,8 @@ extern "C" {
         ModAPI::g_PlayerNacreBasePtr = (void**)playerNacreBasePtrAddr;
 
         ModAPI::g_PlayerStaminaAddr = (void*)(baseAddr + 0x110F9A8);
-        ModAPI::g_PlayerVelocityXAddr = (void*)(baseAddr + 0x10EE00C8);
-        ModAPI::g_PlayerVelocityYAddr = (void*)(baseAddr + 0x10EE00CC);
+        ModAPI::g_PlayerVelocityXAddr = (void*)(baseAddr + 0x10EE0C8);
+        ModAPI::g_PlayerVelocityYAddr = (void*)(baseAddr + 0x10EE0CC);
         
         char msg[256];
         sprintf_s(msg, "Found player base pointer at: 0x%p", (void*)playerLocationBasePtrAddr);

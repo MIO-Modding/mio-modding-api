@@ -265,10 +265,7 @@ extern "C" {
     // Initialization
     // ========================================
     
-    MODDING_API void InitializeAddresses() {
-        // The base address from Cheat Engine: "mio.exe"+010EDF48
-        // This is a static address that points to the player object
-        
+    MODDING_API void InitializeAddresses() {        
         HMODULE hModule = GetModuleHandleA("mio.exe");
         if (!hModule) {
             LogMessage("ERROR: Failed to get mio.exe module handle!");
@@ -292,15 +289,6 @@ extern "C" {
         ModAPI::g_PlayerStaminaAddr = (void*)(baseAddr + 0x110F9A8);
         ModAPI::g_PlayerVelocityXAddr = (void*)(baseAddr + 0x10EE0C8);
         ModAPI::g_PlayerVelocityYAddr = (void*)(baseAddr + 0x10EE0CC);
-        
-        char msg[256];
-        sprintf_s(msg, "Found player base pointer at: 0x%p", (void*)playerLocationBasePtrAddr);
-        LogMessage(msg);
-        
-        // Test if we can read player location
-        f32x3 loc = GetPlayerLocation();
-        sprintf_s(msg, "Player location: X=%.2f, Y=%.2f, Z=%.2f", loc.x, loc.y, loc.z);
-        LogMessage(msg);
     }
     
     // ========================================

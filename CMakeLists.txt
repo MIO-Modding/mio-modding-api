@@ -55,19 +55,9 @@ install(FILES include/modding_api.h
     DESTINATION include
 )
 
-# Copy winhttp_orig.dll from System32 to build directory
-if(WIN32)
-    add_custom_command(TARGET winhttp POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "$ENV{WINDIR}/System32/winhttp.dll"
-        "${CMAKE_BINARY_DIR}/bin/winhttp_orig.dll"
-        COMMENT "Copying original winhttp.dll"
-    )
-    
-    # Also create mods directory
-    add_custom_command(TARGET winhttp POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory
-        "${CMAKE_BINARY_DIR}/bin/mods"
-        COMMENT "Creating mods directory"
-    )
-endif()
+# Create mods directory
+add_custom_command(TARGET winhttp POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+    "${CMAKE_BINARY_DIR}/bin/mods"
+    COMMENT "Creating mods directory"
+)

@@ -11,7 +11,7 @@ An API for modding MIO: Memories in Orbit
 
 ## Building
 
-### Using CMake Presets (Recommended)
+### Using CMake Presets
 ```powershell
 # Configure
 cmake --preset x64-release
@@ -26,7 +26,7 @@ cmake --install build/x64-release
 
 ## Installation to Game
 
-1. Copy `winhttp.dll` and `winhttp_orig.dll` to your game directory
+1. Copy `winhttp.dll` to your game directory
 2. Copy the `mods` folder to your game directory
 3. Place mod DLLs in the `mods` folder
 4. Launch the game

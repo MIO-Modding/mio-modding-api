@@ -1,9 +1,11 @@
 #include <windows.h>
 #include <stdio.h>
 #include <psapi.h>
+#include <dwmapi.h>
 #include "modding_api.h"
 
 #pragma comment(lib, "psapi.lib")
+#pragma comment(lib, "dwmapi.lib")
 
 // Forward all exports to the original DLL
 #pragma comment(linker, "/export:WinHttpAddRequestHeaders=C:\\Windows\\System32\\WINHTTP.WinHttpAddRequestHeaders,@1")
@@ -94,109 +96,179 @@
 #pragma comment(linker, "/export:WinHttpWriteData=C:\\Windows\\System32\\WINHTTP.WinHttpWriteData,@86")
 #pragma comment(linker, "/export:WinHttpWriteProxySettings=C:\\Windows\\System32\\WINHTTP.WinHttpWriteProxySettings,@87")
 
-bool IsTargetExecutable() {
+bool IsTargetExecutable()
+{
     char path[MAX_PATH];
-    if (!GetModuleFileNameA(nullptr, path, MAX_PATH)) {
+    if (!GetModuleFileNameA(nullptr, path, MAX_PATH))
+    {
         return false;
     }
-    
+
     // Extract filename from full path
-    const char* exeName = strrchr(path, '\\');
+    const char *exeName = strrchr(path, '\\');
     exeName = exeName ? exeName + 1 : path;
-    
+
     // Check if this is MIO.exe (case-insensitive)
     return _stricmp(exeName, "MIO.exe") == 0;
 }
 
-void LoadMods() {
+void DisableDWM() {
+    DwmEnableComposition(DWM_EC_DISABLECOMPOSITION);
+    HKEY hKey;
+    LSTATUS lResult;
+    const wchar_t* subKeyPath = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers";
+    const wchar_t* valueName = L"C:\\Program Files (x86)\\Steam\\steamapps\\common\\MIO\\mio.exe";
+    const wchar_t* valueData = L"~ DISABLEDXMAXIMIZEDWINDOWEDMODE";
+
+    lResult = RegCreateKeyExW(
+        HKEY_CURRENT_USER,
+        subKeyPath,
+        0,
+        NULL,
+        REG_OPTION_NON_VOLATILE,
+        KEY_ALL_ACCESS,
+        NULL,
+        &hKey,
+        NULL
+    );
+
+    if (lResult != ERROR_SUCCESS) {
+        printf("Error creating/opening registry key! GUI mods might not work.\n");
+        return;
+    }
+
+    DWORD dataSize = (DWORD)((wcslen(valueData) + 1) * sizeof(wchar_t));
+
+    lResult = RegSetValueExW(
+        hKey,
+        valueName,
+        0,
+        REG_SZ,
+        (LPBYTE)valueData,
+        dataSize
+    );
+
+    if (lResult != ERROR_SUCCESS) {
+        printf("Error setting registry key! GUI mods might not work.\n");
+        return;
+    } else {
+        printf("DWM rendering disabled successfully. Please relaunch your game if GUI mods continue to not work.\n");
+    }
+
+    RegCloseKey(hKey);
+}
+
+void LoadMods()
+{
     LogMessage("Loading mods from ./mods/ directory...");
-    
+
     WIN32_FIND_DATAA findData;
     HANDLE hFind = FindFirstFileA(".\\mods\\*.dll", &findData);
-    
-    if (hFind == INVALID_HANDLE_VALUE) {
+
+    if (hFind == INVALID_HANDLE_VALUE)
+    {
         LogMessage("No mods found or mods directory doesn't exist.");
         return;
     }
-    
+
     int modCount = 0;
-    do {
+    do
+    {
         char modPath[MAX_PATH];
         sprintf_s(modPath, ".\\mods\\%s", findData.cFileName);
-        
+
         HMODULE hMod = LoadLibraryA(modPath);
-        if (hMod) {
+        if (hMod)
+        {
             char msg[256];
             sprintf_s(msg, "Loaded mod: %s", findData.cFileName);
             LogMessage(msg);
-            
+
             // Try to call the mod's initialization function
             typedef void (*ModInitFunc)();
             ModInitFunc modInit = (ModInitFunc)GetProcAddress(hMod, "ModInit");
-            if (modInit) {
+            if (modInit)
+            {
                 sprintf_s(msg, "Initializing %s...", findData.cFileName);
                 LogMessage(msg);
                 modInit();
-            } else {
+            }
+            else
+            {
                 sprintf_s(msg, "Warning: %s has no ModInit() function", findData.cFileName);
                 LogMessage(msg);
             }
-            
+
             modCount++;
-        } else {
+        }
+        else
+        {
             char msg[256];
             sprintf_s(msg, "Failed to load: %s (Error: %d)", findData.cFileName, GetLastError());
             LogMessage(msg);
         }
     } while (FindNextFileA(hFind, &findData));
-    
+
     FindClose(hFind);
-    
+
     char msg[256];
     sprintf_s(msg, "Loaded %d mod(s)", modCount);
     LogMessage(msg);
 }
 
-void InitializeModAPI() {
-    AllocConsole();
-    FILE* f;
-    freopen_s(&f, "CONOUT$", "w", stdout);
-    
-    printf("==============================================\n");
-    printf("        Game Modding API v%d.%d.%d\n", 
-           MODDING_API_VERSION_MAJOR, 
-           MODDING_API_VERSION_MINOR, 
-           MODDING_API_VERSION_PATCH);
-    printf("==============================================\n");
-    
-    LogMessage("Modding API initialized!");
-    
-    // Initialize addresses from Cheat Engine findings
-    InitializeAddresses();
-    
-    printf("==============================================\n\n");
-    
+void InitializeModAPI()
+{
     // Create mods directory if it doesn't exist
     CreateDirectoryA(".\\mods", NULL);
-    
+
+    // Create modconfig directory if it doesn't exist
+    CreateDirectoryA(".\\modconfig", NULL);
+
+    AllocConsole();
+    FILE *f;
+    freopen_s(&f, "CONOUT$", "w", stdout);
+    FILE *fp;
+    freopen_s(&fp, ".\\mods\\error.txt", "w", stderr);
+    setvbuf(stderr, nullptr, _IONBF, 0);
+
+    printf("==============================================\n");
+    printf("        Game Modding API v%d.%d.%d\n",
+           MODDING_API_VERSION_MAJOR,
+           MODDING_API_VERSION_MINOR,
+           MODDING_API_VERSION_PATCH);
+    printf("==============================================\n");
+
+    LogMessage("Modding API initialized!");
+
+    // Initialize addresses from Cheat Engine findings
+    InitializeAddresses();
+
+    printf("Disabling DWM...");
+    DisableDWM(); // Needed for GUI mods on some systems
+
+    printf("==============================================\n\n");
+
     // Load all mods
     LoadMods();
-    
+
     printf("\n==============================================\n");
     printf("Modding API ready!\n");
     printf("==============================================\n\n");
 }
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
-    switch (ul_reason_for_call) {
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+{
+    switch (ul_reason_for_call)
+    {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hModule);
-        
+
         // Only initialize modding API if this is MIO.exe
-        if (!IsTargetExecutable()) {
-            return TRUE;  // Still load the DLL, just don't initialize mods
+        if (!IsTargetExecutable())
+        {
+            return TRUE; // Still load the DLL, just don't initialize mods
         }
-        
+
         CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)InitializeModAPI, hModule, 0, nullptr);
         break;
     case DLL_PROCESS_DETACH:

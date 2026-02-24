@@ -30,9 +30,10 @@ target_compile_definitions(winhttp PRIVATE
     MODDING_API_EXPORTS
 )
 
-# Link against psapi
+# Link against libraries
 target_link_libraries(winhttp PRIVATE
     psapi
+    dwmapi
 )
 
 # Set output name and import library

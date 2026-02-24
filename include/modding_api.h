@@ -1,10 +1,16 @@
 #pragma once
 #include <windows.h>
+#include <cstdint>
+#include <cstddef>
+
+using u32 = std::uint32_t;
+using u64 = std::uint64_t;
+using i32 = std::int32_t;
 
 // API Version
 #define MODDING_API_VERSION_MAJOR 0
 #define MODDING_API_VERSION_MINOR 0
-#define MODDING_API_VERSION_PATCH 4
+#define MODDING_API_VERSION_PATCH 5
 
 // Export macro for API functions
 #ifdef MODDING_API_EXPORTS
@@ -31,6 +37,25 @@ inline APIVersion make_APIVersion(int major, int minor, int patch) {
     return v;
 }
 
+typedef struct GameString { // 16 bytes
+    char* data;  // 8 bytes
+    u32 size;    // 4 bytes
+    u32 unused;  // 4 bytes
+} GameString;
+
+typedef struct SaveEntryValue { // 64 bytes
+    u32 flags;         // 4 bytes
+    i32 count;         // 4 bytes
+    byte unused[56];   // 56 bytes
+} SaveEntryValue;
+
+typedef struct SaveEntry { // 88 bytes
+    u32 hash;                // 4 bytes
+    u32 padding;             // 4 bytes
+    GameString entry_name;   // 16 bytes
+    SaveEntryValue value;    // 64 bytes
+} SaveEntry;
+
 extern "C" {
     // Initialization
     MODDING_API void InitializeAddresses();
@@ -40,10 +65,25 @@ extern "C" {
     MODDING_API bool SetPlayerLocation(f32x3 location);
     MODDING_API int GetPlayerHealth();
     MODDING_API bool SetPlayerHealth(int health);
-    MODDING_API int GetPlayerNacre();
-    MODDING_API bool SetPlayerNacre(int nacre);
-    MODDING_API int GetPlayerStamina();
+    MODDING_API int GetPlayerLiquidNacre();
+    MODDING_API bool SetPlayerLiquidNacre(int nacre);
+    MODDING_API int GetPlayerCrystalNacre();
+    MODDING_API bool SetPlayerCrystalNacre(int nacre);
+    MODDING_API float GetPlayerStamina();
     MODDING_API bool SetPlayerStamina(float stamina);
+
+    // Save entry functions - returns POINTER to actual entry in memory
+    MODDING_API int GetSaveEntryCount();
+    MODDING_API SaveEntry* GetSaveEntryByIndex(int index);
+    MODDING_API SaveEntry* GetSaveEntry(const char* name);
+    MODDING_API bool SaveEntryExists(const char* name);
+    MODDING_API const char* GetSaveEntryName(int index);
+    
+    // Helper functions for reading/writing count
+    MODDING_API bool GetSaveEntryValueCount(const char* name, i32* outCount);
+    MODDING_API bool SetSaveEntryValueCount(const char* name, i32 count);
+    MODDING_API bool GetSaveEntryValueFlags(const char* name, u32* outFlags);
+    MODDING_API bool SetSaveEntryValueFlags(const char* name, u32 flags);
     
     // Memory functions
     MODDING_API bool WriteMemory(void* address, const void* data, size_t size);

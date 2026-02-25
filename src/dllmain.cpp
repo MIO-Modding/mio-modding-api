@@ -3,6 +3,7 @@
 #include <psapi.h>
 #include <stdio.h>
 #include <windows.h>
+#include "assembly.h"
 
 #pragma comment(lib, "psapi.lib")
 #pragma comment(lib, "dwmapi.lib")
@@ -405,6 +406,8 @@ void InitializeModAPI() {
   printf("\n==============================================\n");
   printf("Modding API ready!\n");
   printf("==============================================\n\n");
+
+  test_print();
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call,

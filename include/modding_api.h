@@ -27,6 +27,13 @@ inline f32x3 make_f32x3(float x, float y, float z) {
     f32x3 v = {x, y, z};
     return v;
 }
+typedef struct f32x2 {
+    float x, y;
+} f32x2;
+inline f32x2 make_f32x2(float x, float y) {
+    f32x2 v = {x, y};
+    return v;
+}
 
 typedef struct APIVersion {
     int major, minor, patch;
@@ -63,6 +70,8 @@ extern "C" {
     // Player functions
     MODDING_API f32x3 GetPlayerLocation();
     MODDING_API bool SetPlayerLocation(f32x3 location);
+    MODDING_API f32x2 GetPlayerVelocity();
+    MODDING_API bool SetPlayerVelocity(f32x2 velocity);
     MODDING_API int GetPlayerHealth();
     MODDING_API bool SetPlayerHealth(int health);
     MODDING_API int GetPlayerLiquidNacre();

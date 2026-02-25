@@ -7,7 +7,9 @@
 namespace ModAPI
 {
     // Constant addresses
-    void *g_PlayerStaminaAddr = nullptr;
+    void* g_PlayerStaminaAddr = nullptr;
+    void* g_PlayerVelocityXAddr = nullptr;
+    void* g_PlayerVelocityYAddr = nullptr;
 
     // Base address for pointer chain
     void **g_PlayerLocationBasePtr = nullptr;
@@ -180,10 +182,35 @@ extern "C"
         return success;
     }
 
-    MODDING_API int GetPlayerHealth()
-    {
-        if (!ModAPI::g_PlayerHealthBasePtr)
-        {
+    MODDING_API f32x2 GetPlayerVelocity() {
+        f32x2 vel = {-1.0f, -1.0f};
+
+        if (!ModAPI::g_PlayerVelocityXAddr || !ModAPI::g_PlayerVelocityYAddr) {
+            return vel;
+        }
+
+        
+
+        vel.x = *(float*)ModAPI::g_PlayerVelocityXAddr;
+        vel.y = *(float*)ModAPI::g_PlayerVelocityYAddr;
+
+        return vel;
+    }
+
+    MODDING_API bool SetPlayerVelocity(f32x2 velocity) {
+        if (!ModAPI::g_PlayerVelocityXAddr || !ModAPI::g_PlayerVelocityYAddr) {
+            return false;
+        }
+
+        bool success = true;
+        success &= WriteMemoryTyped(ModAPI::g_PlayerVelocityXAddr, velocity.x);
+        success &= WriteMemoryTyped(ModAPI::g_PlayerVelocityYAddr, velocity.y);
+
+        return success;
+    }
+
+    MODDING_API int GetPlayerHealth() {
+        if (!ModAPI::g_PlayerHealthBasePtr) {
             return -1;
         }
 
@@ -429,6 +456,9 @@ extern "C"
 
         ModAPI::g_SaveArrayPtr = (void ***)saveArrayPtrAddr;
         ModAPI::g_SaveArraySize = (uint32_t *)saveArraySizeAddr;
+        ModAPI::g_PlayerStaminaAddr = (void*)(baseAddr + 0x110F9A8);
+        ModAPI::g_PlayerVelocityXAddr = (void*)(baseAddr + 0x10EE0C8);
+        ModAPI::g_PlayerVelocityYAddr = (void*)(baseAddr + 0x10EE0CC);
     }
 
     // ========================================

@@ -1,6 +1,7 @@
 #include "modding_api.h"
 #include <psapi.h>
 #include <stdio.h>
+#include <bit>
 
 #pragma comment(lib, "psapi.lib")
 
@@ -8,7 +9,9 @@ namespace ModAPI {
 // Constant addresses
 void *g_PlayerStaminaAddr = nullptr;
 void *g_PlayerVelocityXAddr = nullptr;
-void *g_PlayerVelocityYAddr = nullptr;
+void* g_PlayerVelocityYAddr = nullptr;
+void* g_MoveByMethodAddr = nullptr;
+void* g_PlayerObjAddr = nullptr;
 
 // Base address for pointer chain
 void **g_PlayerLocationBasePtr = nullptr;
@@ -265,6 +268,15 @@ MODDING_API bool SetPlayerStamina(float stamina) {
   return success;
 }
 
+MODDING_API int64_t MovePlayer(f32x2 vector) {
+    //I am still unsure what this array is for lol
+    float array[0x4];
+    int64_t vec = CreateXYInt64(vector.x, vector.y);
+    //Im also unsure what the return even is meant to be so im just passing it through
+    int64_t ret = CallAssembly<int64_t>(ModAPI::g_MoveByMethodAddr, ModAPI::g_PlayerObjAddr, &vec, array);
+    return ret;
+}
+
 // ========================================
 // Save Entry Functions
 // ========================================
@@ -389,6 +401,9 @@ MODDING_API void InitializeAddresses() {
   uintptr_t saveArraySizeAddr = baseAddr + 0x01114AC8;
 
   // Store the address
+  ModAPI::g_MoveByMethodAddr = (void*)(baseAddr + 0x9d4340);
+  ModAPI::g_PlayerObjAddr = (void*)(baseAddr + 0x10edc50);
+
   ModAPI::g_PlayerLocationBasePtr = (void **)playerLocationBasePtrAddr;
   ModAPI::g_PlayerHealthBasePtr = (void **)playerHealthBasePtrAddr;
   ModAPI::g_PlayerNacreBasePtr = (void **)playerNacreBasePtrAddr;
@@ -413,5 +428,32 @@ MODDING_API APIVersion GetAPIVersion() {
   APIVersion v = {MODDING_API_VERSION_MAJOR, MODDING_API_VERSION_MINOR,
                   MODDING_API_VERSION_PATCH};
   return v;
+}
+MODDING_API uint32_t FloatToUInt32(float f) {
+    uint32_t u;
+    memcpy(&u, &f, sizeof(f));
+    return u;
+}
+MODDING_API int64_t CreateXYInt64(float x, float y) {
+    uint32_t u1 = FloatToUInt32(y);
+    uint32_t u2 = FloatToUInt32(x);
+
+    uint64_t combined_u64 = (static_cast<uint64_t>(u1) << 32) | u2;
+    int64_t combined_s64 = static_cast<int64_t>(combined_u64);
+
+    return combined_s64;
+}
+MODDING_API f32x2 FromXYInt64(int64_t xyint) {
+    uint32_t b1 = static_cast<uint32_t>(static_cast<uint64_t>(xyint) >> 32);
+    uint32_t b2 = static_cast<uint32_t>(xyint & 0xFFFFFFFF);
+
+    float y;
+    float x;
+    memcpy(&y, &b1, sizeof(float));
+    memcpy(&x, &b2, sizeof(float));
+    f32x2 vec = f32x2();
+    vec.x = x;
+    vec.y = y;
+    return vec;
 }
 }

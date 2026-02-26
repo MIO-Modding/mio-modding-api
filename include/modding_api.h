@@ -82,6 +82,7 @@ MODDING_API int GetPlayerCrystalNacre();
 MODDING_API bool SetPlayerCrystalNacre(int nacre);
 MODDING_API float GetPlayerStamina();
 MODDING_API bool SetPlayerStamina(float stamina);
+MODDING_API int64_t MovePlayer(f32x2 vector);
 
 // Save entry functions
 MODDING_API int GetSaveEntryCount();
@@ -106,6 +107,9 @@ MODDING_API void *PatternScan(const char *pattern, const char *mask);
 // Utility
 MODDING_API void LogMessage(const char *message);
 MODDING_API APIVersion GetAPIVersion();
+MODDING_API uint32_t FloatToUInt32(float f);
+MODDING_API int64_t CreateXYInt64(float x, float y);
+MODDING_API f32x2 FromXYInt64(int64_t xyint);
 }
 
 // Templated helpers for convenience (C++ only, outside extern "C")
@@ -115,4 +119,11 @@ template <typename T> inline T ReadMemoryTyped(void *address) {
 
 template <typename T> inline bool WriteMemoryTyped(void *address, T value) {
   return WriteMemory(address, &value, sizeof(T));
+}
+template <typename ReturnType, typename... Args>
+ReturnType CallAssembly(void* address, Args... args) {
+    uintptr_t addr = reinterpret_cast<uintptr_t>(address);
+    typedef ReturnType(__fastcall* InternalFunc)(Args...);
+    InternalFunc func = reinterpret_cast<InternalFunc>(addr);
+    return func(args...);
 }

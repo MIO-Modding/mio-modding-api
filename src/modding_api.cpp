@@ -86,27 +86,44 @@ MODDING_API bool NopBytes(void *address, size_t count) {
   return true;
 }
 
-MODDING_API void *PatternScan(const char *pattern, const char *mask) {
-  MODULEINFO moduleInfo;
-  GetModuleInformation(GetCurrentProcess(), GetModuleHandle(NULL), &moduleInfo,
-                       sizeof(MODULEINFO));
+MODDING_API void* PatternScan(HMODULE module, const char* pattern, const char* mask) {
+    MODULEINFO moduleInfo;
+    GetModuleInformation(GetCurrentProcess(), module, &moduleInfo,
+        sizeof(MODULEINFO));
 
-  char *base = (char *)moduleInfo.lpBaseOfDll;
-  size_t size = moduleInfo.SizeOfImage;
-  size_t patternLength = strlen(mask);
+    char* base = (char*)moduleInfo.lpBaseOfDll;
+    size_t size = moduleInfo.SizeOfImage;
+    size_t patternLength = strlen(mask);
 
-  for (size_t i = 0; i < size - patternLength; i++) {
-    bool found = true;
-    for (size_t j = 0; j < patternLength; j++) {
-      if (mask[j] != '?' && pattern[j] != base[i + j]) {
-        found = false;
-        break;
-      }
+    for (size_t i = 0; i < size - patternLength; i++) {
+        bool found = true;
+        for (size_t j = 0; j < patternLength; j++) {
+            if (mask[j] != '?' && pattern[j] != base[i + j]) {
+                found = false;
+                break;
+            }
+        }
+        if (found)
+            return &base[i];
     }
-    if (found)
-      return &base[i];
-  }
-  return nullptr;
+    return nullptr;
+}
+MODDING_API void* PatternScanReverse(HMODULE module, void* from, const char* pattern, const char* mask) {
+    char* base = (char*)module;
+    size_t patternLength = strlen(mask);
+
+    for (size_t i = (uintptr_t)from- (uintptr_t)base; i > 0; i--) {
+        bool found = true;
+        for (size_t j = 0; j < patternLength; j++) {
+            if (mask[j] != '?' && pattern[j] != base[i + j]) {
+                found = false;
+                break;
+            }
+        }
+        if (found)
+            return &base[i];
+    }
+    return nullptr;
 }
 
 // ========================================
@@ -401,7 +418,7 @@ MODDING_API void InitializeAddresses() {
   uintptr_t saveArraySizeAddr = baseAddr + 0x01114AC8;
 
   // Store the address
-  ModAPI::g_MoveByMethodAddr = (void*)(baseAddr + 0x9d4340);
+  ModAPI::g_MoveByMethodAddr = (void*)(PatternScanReverse(hModule, PatternScan(hModule, "\x48\x8d\x05\x84\x42\x58\x00", "xxxxxxx"), "\x41\x57", "xx"));
   ModAPI::g_PlayerObjAddr = (void*)(baseAddr + 0x10edc50);
 
   ModAPI::g_PlayerLocationBasePtr = (void **)playerLocationBasePtrAddr;

@@ -83,6 +83,7 @@ MODDING_API bool SetPlayerCrystalNacre(int nacre);
 MODDING_API float GetPlayerStamina();
 MODDING_API bool SetPlayerStamina(float stamina);
 MODDING_API int64_t MovePlayer(f32x2 vector);
+MODDING_API bool CanMovePlayer();
 
 // Save entry functions
 MODDING_API int GetSaveEntryCount();
@@ -102,7 +103,8 @@ MODDING_API bool WriteMemory(void *address, const void *data, size_t size);
 MODDING_API bool ReadMemory(void *address, void *buffer, size_t size);
 MODDING_API bool PatchBytes(void *address, const char *bytes, size_t size);
 MODDING_API bool NopBytes(void *address, size_t count);
-MODDING_API void *PatternScan(const char *pattern, const char *mask);
+MODDING_API void* PatternScan(HMODULE module, const char* pattern, const char* mask);
+MODDING_API void* PatternScanReverse(HMODULE module, void* from, const char* pattern, const char* mask);
 
 // Utility
 MODDING_API void LogMessage(const char *message);

@@ -5,9 +5,9 @@
 
 namespace fs = std::filesystem;
 
-extern "C" {
-	void OverwriteFlambyFile(fs::path file, std::vector<char> data);
-	void RestoreFlambyOriginalData();
-	void ApplyFlambyData();
-	void LoadFlambyData(fs::path directory);
-}
+void OverwriteFlambyFile(fs::path file, std::vector<char> data);
+void RestoreFlambyOriginalData();
+void ApplyFlambyData();
+void LoadFlambyData(fs::path directory);
+void ModifyGin(fs::path file, std::string section, std::vector<char> data);
+void ModifyGin(fs::path file, std::string section, fs::path);

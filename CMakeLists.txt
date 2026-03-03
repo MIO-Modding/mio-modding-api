@@ -51,6 +51,19 @@ FetchContent_Declare(
 set(LZ4_BUILD_CLI OFF CACHE INTERNAL "")
 set(LZ4_BUILD_TESTS OFF CACHE INTERNAL "")
 FetchContent_MakeAvailable(lz4)
+FetchContent_Declare(
+  hash-library
+  GIT_REPOSITORY https://github.com/stbrumme/hash-library.git
+  GIT_TAG        master
+)
+FetchContent_GetProperties(hash-library)
+if(NOT hash-library_POPULATED)
+  FetchContent_Populate(hash-library)
+  add_library(hash-library STATIC 
+      "${hash-library_SOURCE_DIR}/md5.cpp"
+  )
+  target_include_directories(winhttp PRIVATE ${hash-library_SOURCE_DIR})
+endif()
 
 # Link against libraries
 target_link_libraries(winhttp PRIVATE
@@ -58,6 +71,7 @@ target_link_libraries(winhttp PRIVATE
     dwmapi
     libzstd_static
     lz4_static
+    hash-library
 )
 
 # Set output name and import library

@@ -16,7 +16,7 @@ std::unordered_map<fs::path, std::pair<GinKey, std::unordered_map<std::string, s
 std::vector<fs::path> overwrittenFlambyData;
 
 void OverwriteFlambyFile(fs::path file, std::vector<char> data) {
-	if (fs::exists(file) && std::count(overwrittenFlambyData.begin(), overwrittenFlambyData.end(), file) <= 0) {
+	if (fs::exists(file)) {
 		overwrittenFlambyData.push_back(file);
 	}
 	newFlambyFileData[file] = data;
@@ -54,8 +54,11 @@ void LoadFlambyData(fs::path directory) {
 	}
 }
 void RestoreFlambyOriginalData() {
+	fs::remove_all("flamby_modified");
+	fs::create_directory("flamby_modified");
 	for (fs::path key : overwrittenFlambyData) {
 		std::vector<char> value = originalFlambyFileData[key];
+		fs::copy(key, fs::path("flamby_modified") / key);
 		fs::remove(key);
 		std::ofstream stream(key, std::ios::out | std::ios::binary);
 		stream.write(reinterpret_cast<const char*>(value.data()), value.size());
@@ -63,21 +66,19 @@ void RestoreFlambyOriginalData() {
 	}
 }
 void ApplyFlambyData() {
-	LogMessage("1");
-	Sleep(500);
+	LogMessage("Recompiling Gin");
 	for (std::pair<fs::path, std::pair<GinKey, std::unordered_map<std::string, std::pair<GinSectionInfo, std::vector<char>>>>> i : ginData) {
-		newFlambyFileData[i.first] = RecompileGin(i.second);
+		OverwriteFlambyFile(i.first, RecompileGin(i.second));
 	}
-	LogMessage("2");
-	Sleep(500);
+	LogMessage("Finished Recompiling Gin");
+	LogMessage("Writing Gin Data");
 	for (std::pair<fs::path, std::vector<char>> i : newFlambyFileData) {
 		fs::path key = i.first;
 		std::vector<char> value = i.second;
 		fs::remove(key);
 		std::ofstream stream(key, std::ios::out | std::ios::binary);
-		stream.write(reinterpret_cast<const char*>(value.data()), value.size());
+		stream.write(value.data(), value.size());
 		stream.close();
 	}
-	LogMessage("3");
-	Sleep(500);
+	LogMessage("Finished Writing Gin Data");
 }

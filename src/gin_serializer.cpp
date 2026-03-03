@@ -7,29 +7,41 @@
 #include <zstd.h>
 #include <lz4.h>
 #include <gin_serializer.h>
+#include "md5.h"
 
 namespace fs = std::filesystem;
 
-template <typename T> inline void WriteToVector(std::vector<char>* vector, T value) {
+template <typename T>
+void WriteToVector(std::vector<char>& byteVector, const T& value) {
     const char* bytes = reinterpret_cast<const char*>(&value);
-    vector->insert(vector->end(), bytes, bytes + sizeof(value));
+    byteVector.insert(byteVector.end(), bytes, bytes + sizeof(T));
+}
+
+void get_md5_as_uint64(const std::vector<char>& data, uint64_t out_hash[2]) {
+    MD5 md5;
+    md5.add(data.data(), data.size());
+    unsigned char digest[16];
+    md5.getHash(digest);
+    std::memcpy(out_hash, digest, 16);
 }
 
 const uint32_t gin_magic = 0x004E4947;
-const uint32_t gin_version = 2;
+const uint32_t gin_version = 2; 
 std::vector<char> RecompileGin(std::pair<GinKey, std::unordered_map<std::string, std::pair<GinSectionInfo, std::vector<char>>>> data) {
     std::vector<char> output;
-    WriteToVector<uint32_t>(&output, gin_magic);
-    WriteToVector<uint32_t>(&output, data.first.ver);
-    WriteToVector<uint32_t[2]>(&output, data.first.res);
-    WriteToVector<char[16]>(&output, data.first.id);
-    WriteToVector<uint32_t>(&output, data.first.res2);
-    WriteToVector<char[256]>(&output, data.first.path);
+    WriteToVector<uint32_t>(output, gin_magic);
+    WriteToVector<uint32_t>(output, data.first.ver);
+    WriteToVector<uint32_t[2]>(output, data.first.res);
+    WriteToVector<char[16]>(output, data.first.id);
+    WriteToVector<uint32_t>(output, data.first.res2);
+    WriteToVector<char[256]>(output, data.first.path);
     uint32_t sections = data.second.size();
-    WriteToVector(&output, sections);
-    WriteToVector<uint64_t[2]>(&output, data.first.check);
+    WriteToVector(output, sections);
+    uint32_t checkInd = output.size();
+    WriteToVector<uint64_t[2]>(output, data.first.check);
     std::vector<std::vector<char>> newSections;
     uint64_t offset = output.size()+(sections*sizeof(GinSectionInfo));
+    std::vector<char> checksumData;
     for (auto& i : data.second) {
         GinSectionInfo info = GinSectionInfo();
         std::copy(std::begin(i.second.first.name), std::end(i.second.first.name), std::begin(info.name));
@@ -68,20 +80,32 @@ std::vector<char> RecompileGin(std::pair<GinKey, std::unordered_map<std::string,
         std::copy(std::begin(i.second.first.check), std::end(i.second.first.check), std::begin(info.check));
         info.offset = offset;
 
-        WriteToVector<uint8_t[64]>(&output, info.name);
-        WriteToVector<uint64_t>(&output, info.offset);
-        WriteToVector<uint32_t>(&output, info.size);
-        WriteToVector<uint32_t>(&output, info.c_size);
-        WriteToVector<uint32_t>(&output, info.flags);
-        WriteToVector<uint32_t[4]>(&output, info.params);
-        WriteToVector<uint32_t>(&output, info.ver);
-        WriteToVector<char[16]>(&output, info.id);
-        WriteToVector<uint64_t[2]>(&output, info.check);
+        uint64_t sectionCheck[2] = { 0, 0 };
+        get_md5_as_uint64(finalData, sectionCheck);
+
+        std::vector<char> sectionVector;
+        WriteToVector<uint8_t[64]>(sectionVector, info.name);
+        WriteToVector<uint64_t>(sectionVector, info.offset);
+        WriteToVector<uint32_t>(sectionVector, info.size);
+        WriteToVector<uint32_t>(sectionVector, info.c_size);
+        WriteToVector<uint32_t>(sectionVector, info.flags);
+        WriteToVector<uint32_t[4]>(sectionVector, info.params);
+        WriteToVector<uint32_t>(sectionVector, info.ver);
+        WriteToVector<char[16]>(sectionVector, info.id);
+        WriteToVector<uint64_t[2]>(sectionVector, sectionCheck);
+        output.insert(output.end(), sectionVector.begin(), sectionVector.end());
+        checksumData.insert(checksumData.end(), sectionVector.begin(), sectionVector.end());
         offset += compressedSize;
     }
     for (auto& i : newSections) {
         output.insert(output.end(), i.begin(), i.end());
+        checksumData.insert(checksumData.end(), i.begin(), i.end());
     }
+
+    uint64_t check[2] = { 0, 0 };
+    get_md5_as_uint64(checksumData, check);
+    std::memcpy(&output[checkInd], check, 16);
+
     return output;
 }
 std::pair<GinKey, std::unordered_map<std::string, std::pair<GinSectionInfo, std::vector<char>>>> DecompileGin(fs::path file) {

@@ -1,8 +1,13 @@
 #include "modding_api.h"
+#include "flamby_handling.h"
 #include <dwmapi.h>
 #include <psapi.h>
 #include <stdio.h>
 #include <windows.h>
+#include <filesystem>
+#include <iostream>
+
+namespace fs = std::filesystem;
 
 #pragma comment(lib, "psapi.lib")
 #pragma comment(lib, "dwmapi.lib")
@@ -370,7 +375,7 @@ void LoadMods() {
   LogMessage(msg);
 }
 
-void InitializeModAPI() {
+void InitializeModAPI(HMODULE hModule) {
   // Create mods directory if it doesn't exist
   CreateDirectoryA(".\\mods", NULL);
 
@@ -391,6 +396,10 @@ void InitializeModAPI() {
 
   LogMessage("Modding API initialized!");
 
+  LogMessage("Loading Flamby Data");
+  LoadFlambyData(fs::path("flamby"));
+  LogMessage("Loaded Flamby Data");
+
   // Initialize addresses from Cheat Engine findings
   InitializeAddresses();
 
@@ -402,6 +411,10 @@ void InitializeModAPI() {
   // Load all mods
   LoadMods();
 
+  LogMessage("Applying Flamby Data");
+  ApplyFlambyData();
+  LogMessage("Applying Flamby Data");
+
   printf("\n==============================================\n");
   printf("Modding API ready!\n");
   printf("==============================================\n\n");
@@ -410,19 +423,42 @@ void InitializeModAPI() {
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call,
                       LPVOID lpReserved) {
   switch (ul_reason_for_call) {
-  case DLL_PROCESS_ATTACH:
-    DisableThreadLibraryCalls(hModule);
+      case DLL_PROCESS_ATTACH: {
+          DisableThreadLibraryCalls(hModule);
 
-    // Only initialize modding API if this is MIO.exe
-    if (!IsTargetExecutable()) {
-      return TRUE; // Still load the DLL, just don't initialize mods
-    }
+          // Only initialize modding API if this is MIO.exe
+          if (!IsTargetExecutable()) {
+              return TRUE; // Still load the DLL, just don't initialize mods
+          }
 
-    CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)InitializeModAPI, hModule,
-                 0, nullptr);
-    break;
-  case DLL_PROCESS_DETACH:
-    break;
+          //Stop double running when the exe is ran
+          std::wstring wstr = std::wstring(GetCommandLineW());
+          std::wstring sub = wstr.substr(1, wstr.substr(1).find('"'));
+          std::wstring mioExeName = L"mio.exe";
+          if (wstr.find('"') == 0 && sub.substr(sub.length() - mioExeName.length(), mioExeName.length()) == mioExeName) {
+              return TRUE;
+          }
+
+          InitializeModAPI(hModule);
+          Sleep(1000);
+          break;
+      }
+      case DLL_PROCESS_DETACH: {
+          //To display the flamby restore happening, better solution would be preferred
+          FreeConsole();
+          AllocConsole();
+          FILE* f;
+          freopen_s(&f, "CONOUT$", "w", stdout);
+          FILE* fp;
+          freopen_s(&fp, ".\\mods\\error.txt", "w", stderr);
+          setvbuf(stderr, nullptr, _IONBF, 0);
+          
+          LogMessage("Starting Flamby Restore");
+          RestoreFlambyOriginalData();
+          LogMessage("Finished Restoring Flamby");
+          FreeConsole();
+          break;
+      }
   }
   return TRUE;
 }

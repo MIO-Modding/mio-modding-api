@@ -20,7 +20,7 @@ add_library(winhttp SHARED
     src/dllmain.cpp
     src/modding_api.cpp
     include/modding_api.h
-)
+ "include/flamby_handling.h" "src/flamby_handling.cpp" "include/gin_serializer.h" "src/gin_serializer.cpp")
 
 target_include_directories(winhttp PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -30,10 +30,34 @@ target_compile_definitions(winhttp PRIVATE
     MODDING_API_EXPORTS
 )
 
+
+include(FetchContent)
+
+FetchContent_Declare(
+    zstd
+    GIT_REPOSITORY https://github.com/facebook/zstd.git
+    GIT_TAG        v1.5.6
+    SOURCE_SUBDIR  build/cmake
+)
+set(ZSTD_BUILD_SHARED OFF CACHE INTERNAL "")
+set(ZSTD_BUILD_STATIC ON CACHE INTERNAL "")
+FetchContent_MakeAvailable(zstd)
+FetchContent_Declare(
+  lz4
+  GIT_REPOSITORY https://github.com/lz4/lz4.git
+  GIT_TAG        v1.10.0
+  SOURCE_SUBDIR  build/cmake
+)
+set(LZ4_BUILD_CLI OFF CACHE INTERNAL "")
+set(LZ4_BUILD_TESTS OFF CACHE INTERNAL "")
+FetchContent_MakeAvailable(lz4)
+
 # Link against libraries
 target_link_libraries(winhttp PRIVATE
     psapi
     dwmapi
+    libzstd_static
+    lz4_static
 )
 
 # Set output name and import library

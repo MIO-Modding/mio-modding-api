@@ -1,8 +1,17 @@
 #include "modding_api.h"
 #include <psapi.h>
 #include <stdio.h>
+#include <filesystem>
+#include <iostream>
+#include <fstream>
+#include <zstd.h>
+#include <lz4.h>
+#include <string>
+#include <unordered_map>
 
 #pragma comment(lib, "psapi.lib")
+
+namespace fs = std::filesystem;
 
 namespace ModAPI {
 // Constant addresses

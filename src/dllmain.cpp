@@ -440,7 +440,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call,
           }
 
           InitializeModAPI(hModule);
-          Sleep(1000);
           break;
       }
       case DLL_PROCESS_DETACH: {

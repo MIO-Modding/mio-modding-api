@@ -78,7 +78,7 @@ extern "C" {
         }
 
         LogMessage((std::string("Decompiling ") + std::to_string(sectionCount) + " sections").c_str());
-        for (int i = 154000; i < sections.size(); i++) {
+        for (int i = 0; i < sections.size(); i++) {
             section current = sections[i];
             std::string name(reinterpret_cast<const char*>(current.name), sizeof(current.name));
             name = name.substr(0, name.find('\x0'));

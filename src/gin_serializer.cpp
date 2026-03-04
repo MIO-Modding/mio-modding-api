@@ -17,10 +17,6 @@ void WriteToVector(std::vector<char>& byteVector, const T& value) {
     byteVector.insert(byteVector.end(), bytes, bytes + sizeof(T));
 }
 
-void get_murmur3_128_as_uint64(const std::vector<char>& data, uint64_t out_hash[2]) {
-    MurmurHash3_x64_128(data.data(), static_cast<int>(data.size()), 0, out_hash);
-}
-
 const uint32_t gin_magic = 0x004E4947;
 const uint32_t gin_version = 2; 
 std::vector<char> RecompileGin(std::pair<GinKey, std::unordered_map<std::string, std::pair<GinSectionInfo, std::vector<char>>>> data) {
@@ -77,7 +73,7 @@ std::vector<char> RecompileGin(std::pair<GinKey, std::unordered_map<std::string,
         info.offset = offset;
 
         uint64_t sectionCheck[2] = { 0, 0 };
-        get_murmur3_128_as_uint64(finalData, sectionCheck);
+        MurmurHash3_x64_128(finalData.data(), static_cast<int>(finalData.size()), 0, sectionCheck);
 
         std::vector<char> sectionVector;
         WriteToVector<uint8_t[64]>(sectionVector, info.name);
@@ -90,6 +86,7 @@ std::vector<char> RecompileGin(std::pair<GinKey, std::unordered_map<std::string,
         WriteToVector<char[16]>(sectionVector, info.id);
         WriteToVector<uint64_t[2]>(sectionVector, sectionCheck);
         output.insert(output.end(), sectionVector.begin(), sectionVector.end());
+        checksumData.insert(checksumData.end(), sectionVector.begin(), sectionVector.end());
         offset += compressedSize;
     }
     for (auto& i : newSections) {
@@ -98,7 +95,7 @@ std::vector<char> RecompileGin(std::pair<GinKey, std::unordered_map<std::string,
     }
 
     uint64_t check[2] = { 0, 0 };
-    get_murmur3_128_as_uint64(checksumData, check);
+    MurmurHash3_x64_128(checksumData.data(), static_cast<int>(checksumData.size()), 0, check);
     std::memcpy(&output[checkInd], check, 16);
 
     return output;

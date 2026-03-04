@@ -7,7 +7,7 @@
 #include <zstd.h>
 #include <lz4.h>
 #include <gin_serializer.h>
-#include "md5.h"
+#include "MurmurHash3.h"
 
 namespace fs = std::filesystem;
 
@@ -17,12 +17,8 @@ void WriteToVector(std::vector<char>& byteVector, const T& value) {
     byteVector.insert(byteVector.end(), bytes, bytes + sizeof(T));
 }
 
-void get_md5_as_uint64(const std::vector<char>& data, uint64_t out_hash[2]) {
-    MD5 md5;
-    md5.add(data.data(), data.size());
-    unsigned char digest[16];
-    md5.getHash(digest);
-    std::memcpy(out_hash, digest, 16);
+void get_murmur3_128_as_uint64(const std::vector<char>& data, uint64_t out_hash[2]) {
+    MurmurHash3_x64_128(data.data(), static_cast<int>(data.size()), 0, out_hash);
 }
 
 const uint32_t gin_magic = 0x004E4947;
@@ -81,7 +77,7 @@ std::vector<char> RecompileGin(std::pair<GinKey, std::unordered_map<std::string,
         info.offset = offset;
 
         uint64_t sectionCheck[2] = { 0, 0 };
-        get_md5_as_uint64(finalData, sectionCheck);
+        get_murmur3_128_as_uint64(finalData, sectionCheck);
 
         std::vector<char> sectionVector;
         WriteToVector<uint8_t[64]>(sectionVector, info.name);
@@ -94,7 +90,6 @@ std::vector<char> RecompileGin(std::pair<GinKey, std::unordered_map<std::string,
         WriteToVector<char[16]>(sectionVector, info.id);
         WriteToVector<uint64_t[2]>(sectionVector, sectionCheck);
         output.insert(output.end(), sectionVector.begin(), sectionVector.end());
-        checksumData.insert(checksumData.end(), sectionVector.begin(), sectionVector.end());
         offset += compressedSize;
     }
     for (auto& i : newSections) {
@@ -103,7 +98,7 @@ std::vector<char> RecompileGin(std::pair<GinKey, std::unordered_map<std::string,
     }
 
     uint64_t check[2] = { 0, 0 };
-    get_md5_as_uint64(checksumData, check);
+    get_murmur3_128_as_uint64(checksumData, check);
     std::memcpy(&output[checkInd], check, 16);
 
     return output;

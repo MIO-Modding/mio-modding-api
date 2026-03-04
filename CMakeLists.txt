@@ -52,17 +52,20 @@ set(LZ4_BUILD_CLI OFF CACHE INTERNAL "")
 set(LZ4_BUILD_TESTS OFF CACHE INTERNAL "")
 FetchContent_MakeAvailable(lz4)
 FetchContent_Declare(
-  hash-library
-  GIT_REPOSITORY https://github.com/stbrumme/hash-library.git
+  murmurhash3
+  GIT_REPOSITORY https://github.com/aappleby/smhasher.git
   GIT_TAG        master
 )
-FetchContent_GetProperties(hash-library)
-if(NOT hash-library_POPULATED)
-  FetchContent_Populate(hash-library)
-  add_library(hash-library STATIC 
-      "${hash-library_SOURCE_DIR}/md5.cpp"
+FetchContent_GetProperties(murmurhash3)
+
+if(NOT murmurhash3_POPULATED)
+  FetchContent_Populate(murmurhash3)
+  
+  # MurmurHash3 is just these two files in the 'src' directory
+  add_library(murmurhash3 STATIC 
+    "${murmurhash3_SOURCE_DIR}/src/MurmurHash3.cpp"
   )
-  target_include_directories(winhttp PRIVATE ${hash-library_SOURCE_DIR})
+  target_include_directories(murmurhash3 PUBLIC "${murmurhash3_SOURCE_DIR}/src")
 endif()
 
 # Link against libraries
@@ -71,7 +74,7 @@ target_link_libraries(winhttp PRIVATE
     dwmapi
     libzstd_static
     lz4_static
-    hash-library
+    murmurhash3
 )
 
 # Set output name and import library

@@ -32,7 +32,7 @@ std::vector<char> RecompileGin(std::pair<GinKey, std::unordered_map<std::string,
     uint32_t checkInd = output.size();
     WriteToVector<uint64_t[2]>(output, data.first.check);
     std::vector<std::vector<char>> newSections;
-    uint64_t offset = output.size()+(sections*sizeof(GinSectionInfo));
+    uint64_t offset = output.size() + (sections * sizeof(GinSectionInfo));
     std::vector<char> checksumData;
     for (auto& i : data.second) {
         GinSectionInfo info = GinSectionInfo();
@@ -76,7 +76,7 @@ std::vector<char> RecompileGin(std::pair<GinKey, std::unordered_map<std::string,
         MurmurHash3_x64_128(finalData.data(), static_cast<int>(finalData.size()), 0, sectionCheck);
 
         std::vector<char> sectionVector;
-        WriteToVector<uint8_t[64]>(sectionVector, info.name);
+        WriteToVector<char[64]>(sectionVector, info.name);
         WriteToVector<uint64_t>(sectionVector, info.offset);
         WriteToVector<uint32_t>(sectionVector, info.size);
         WriteToVector<uint32_t>(sectionVector, info.c_size);

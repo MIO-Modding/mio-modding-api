@@ -82,3 +82,14 @@ void ApplyFlambyData() {
 	}
 	LogMessage("Finished Writing Gin Data");
 }
+void PatchChecksum() {
+	//TODO: Change this to search for the address instead of statically inputting it
+	HMODULE hModule = GetModuleHandleA("mio.exe");
+	uintptr_t baseAddr = (uintptr_t)hModule;
+	uintptr_t addr = baseAddr + 0x31678;
+	std::vector<char> bytes = { (char)0x39, (char)0xc0, (char)0x90, (char)0x90, (char)0x90 };
+	for (char i : bytes) {
+		WriteMemoryTyped((void*)addr, i);
+		addr += 1;
+	}
+}

@@ -414,6 +414,8 @@ void InitializeModAPI(HMODULE hModule) {
   //This file exists on my pc not in the repo so commented it out for push
   ModifyGin("flamby/assets.gin", "156597_texture_42", "decomp/156597_texture_42.dds");
 
+  PatchChecksum();
+
   LogMessage("Applying Flamby Data");
   ApplyFlambyData();
   LogMessage("Applying Flamby Data");

@@ -11,3 +11,4 @@ void ApplyFlambyData();
 void LoadFlambyData(fs::path directory);
 void ModifyGin(fs::path file, std::string section, std::vector<char> data);
 void ModifyGin(fs::path file, std::string section, fs::path);
+void PatchChecksum();

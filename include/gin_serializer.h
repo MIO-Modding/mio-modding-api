@@ -13,7 +13,7 @@ typedef struct GinKey {
 	uint64_t check[2];
 } GinKey;
 typedef struct GinSectionInfo {
-    uint8_t name[64];
+    char name[64];
     uint64_t offset;
     uint32_t size;
     uint32_t c_size;

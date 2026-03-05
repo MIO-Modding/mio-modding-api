@@ -1,6 +1,6 @@
 #pragma once
 #include <filesystem>
-#include <unordered_map>
+#include <map>
 
 namespace fs = std::filesystem;
 
@@ -24,5 +24,5 @@ typedef struct GinSectionInfo {
     uint64_t check[2];
 } GinSectionInfo;
 
-std::pair<GinKey, std::unordered_map<std::string, std::pair<GinSectionInfo, std::vector<char>>>> DecompileGin(fs::path file);
-std::vector<char> RecompileGin(std::pair<GinKey, std::unordered_map<std::string, std::pair<GinSectionInfo, std::vector<char>>>> data);
+std::pair<GinKey, std::map<std::string, std::pair<GinSectionInfo, std::vector<char>>>> DecompileGin(fs::path file);
+std::vector<char> RecompileGin(std::pair<GinKey, std::map<std::string, std::pair<GinSectionInfo, std::vector<char>>>> data);

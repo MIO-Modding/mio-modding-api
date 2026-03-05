@@ -2,7 +2,7 @@
 #include <modding_api.h>
 #include <iostream>
 #include <fstream>
-#include <unordered_map>
+#include <map>
 #include <string>
 #include <zstd.h>
 #include <lz4.h>
@@ -19,7 +19,7 @@ void WriteToVector(std::vector<char>& byteVector, const T& value) {
 
 const uint32_t gin_magic = 0x004E4947;
 const uint32_t gin_version = 2; 
-std::vector<char> RecompileGin(std::pair<GinKey, std::unordered_map<std::string, std::pair<GinSectionInfo, std::vector<char>>>> data) {
+std::vector<char> RecompileGin(std::pair<GinKey, std::map<std::string, std::pair<GinSectionInfo, std::vector<char>>>> data) {
     std::vector<char> output;
     WriteToVector<uint32_t>(output, gin_magic);
     WriteToVector<uint32_t>(output, data.first.ver);
@@ -100,22 +100,22 @@ std::vector<char> RecompileGin(std::pair<GinKey, std::unordered_map<std::string,
 
     return output;
 }
-std::pair<GinKey, std::unordered_map<std::string, std::pair<GinSectionInfo, std::vector<char>>>> DecompileGin(fs::path file) {
-    std::unordered_map<std::string, std::pair<GinSectionInfo, std::vector<char>>> output;
+std::pair<GinKey, std::map<std::string, std::pair<GinSectionInfo, std::vector<char>>>> DecompileGin(fs::path file) {
+    std::map<std::string, std::pair<GinSectionInfo, std::vector<char>>> output;
     if (!fs::exists(file)) {
         LogMessage("Failed to decompile gin: File doesnt exist");
-        return std::pair<GinKey, std::unordered_map<std::string, std::pair<GinSectionInfo, std::vector<char>>>>();
+        return std::pair<GinKey, std::map<std::string, std::pair<GinSectionInfo, std::vector<char>>>>();
     }
     std::ifstream fileData(file, std::ios::binary);
     if (!fileData.is_open()) {
         LogMessage("Failed to decompile gin: File couldnt open");
-        return std::pair<GinKey, std::unordered_map<std::string, std::pair<GinSectionInfo, std::vector<char>>>>();
+        return std::pair<GinKey, std::map<std::string, std::pair<GinSectionInfo, std::vector<char>>>>();
     }
     uint32_t magic;
     fileData.read(reinterpret_cast<char*>(&magic), sizeof(magic));
     if (magic != gin_magic) {
         LogMessage("Failed to decompile gin: File isnt a gin file");
-        return std::pair<GinKey, std::unordered_map<std::string, std::pair<GinSectionInfo, std::vector<char>>>>();
+        return std::pair<GinKey, std::map<std::string, std::pair<GinSectionInfo, std::vector<char>>>>();
     }
     GinKey ginKey = GinKey();
     uint32_t ver;
@@ -179,10 +179,10 @@ std::pair<GinKey, std::unordered_map<std::string, std::pair<GinSectionInfo, std:
         else {
             finalData = bytes;
         }
-        std::string finalName = std::to_string(i) + "_" + name;
+        std::string finalName = name;
         output[finalName] = std::pair<GinSectionInfo, std::vector<char>>(current, finalData);
     }
     LogMessage((std::string("Finished Decompiling ") + std::to_string(sectionCount) + " sections").c_str());
     fileData.close();
-    return std::pair<GinKey, std::unordered_map<std::string, std::pair<GinSectionInfo, std::vector<char>>>>(ginKey, output);
+    return std::pair<GinKey, std::map<std::string, std::pair<GinSectionInfo, std::vector<char>>>>(ginKey, output);
 }

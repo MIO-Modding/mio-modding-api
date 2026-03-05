@@ -1,4 +1,4 @@
-#include <unordered_map>
+#include <map>
 #include <string>
 #include <filesystem>
 #include <fstream>
@@ -10,9 +10,9 @@
 
 namespace fs = std::filesystem;
 
-std::unordered_map<fs::path, std::vector<char>> originalFlambyFileData;
-std::unordered_map<fs::path, std::vector<char>> newFlambyFileData;
-std::unordered_map<fs::path, std::pair<GinKey, std::unordered_map<std::string, std::pair<GinSectionInfo, std::vector<char>>>>> ginData;
+std::map<fs::path, std::vector<char>> originalFlambyFileData;
+std::map<fs::path, std::vector<char>> newFlambyFileData;
+std::map<fs::path, std::pair<GinKey, std::map<std::string, std::pair<GinSectionInfo, std::vector<char>>>>> ginData;
 std::vector<fs::path> overwrittenFlambyData;
 
 void OverwriteFlambyFile(fs::path file, std::vector<char> data) {
@@ -67,7 +67,7 @@ void RestoreFlambyOriginalData() {
 }
 void ApplyFlambyData() {
 	LogMessage("Recompiling Gin");
-	for (std::pair<fs::path, std::pair<GinKey, std::unordered_map<std::string, std::pair<GinSectionInfo, std::vector<char>>>>> i : ginData) {
+	for (std::pair<fs::path, std::pair<GinKey, std::map<std::string, std::pair<GinSectionInfo, std::vector<char>>>>> i : ginData) {
 		OverwriteFlambyFile(i.first, RecompileGin(i.second));
 	}
 	LogMessage("Finished Recompiling Gin");

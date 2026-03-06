@@ -29,11 +29,11 @@ std::vector<char> RecompileGin(std::pair<GinKey, std::map<std::string, std::pair
     WriteToVector<char[256]>(output, data.first.path);
     uint32_t sections = data.second.size();
     WriteToVector(output, sections);
-    uint32_t checkInd = output.size();
+    //uint32_t checkInd = output.size();
     WriteToVector<uint64_t[2]>(output, data.first.check);
     std::vector<std::vector<char>> newSections;
     uint64_t offset = output.size() + (sections * sizeof(GinSectionInfo));
-    std::vector<char> checksumData;
+    //std::vector<char> checksumData;
     for (auto& i : data.second) {
         GinSectionInfo info = GinSectionInfo();
         std::copy(std::begin(i.second.first.name), std::end(i.second.first.name), std::begin(info.name));
@@ -42,6 +42,7 @@ std::vector<char> RecompileGin(std::pair<GinKey, std::map<std::string, std::pair
         std::vector<char> finalData;
         size_t uncompressedSize = data.size();
         size_t compressedSize = 0;
+
         if (flags & (1 << 4)) { // ZSTD
             size_t maxCompressedSize = ZSTD_compressBound(uncompressedSize);
             finalData.resize(maxCompressedSize);
@@ -86,17 +87,16 @@ std::vector<char> RecompileGin(std::pair<GinKey, std::map<std::string, std::pair
         WriteToVector<char[16]>(sectionVector, info.id);
         WriteToVector<uint64_t[2]>(sectionVector, sectionCheck);
         output.insert(output.end(), sectionVector.begin(), sectionVector.end());
-        checksumData.insert(checksumData.end(), sectionVector.begin(), sectionVector.end());
-        offset += compressedSize;
+        offset += finalData.size();
     }
     for (auto& i : newSections) {
         output.insert(output.end(), i.begin(), i.end());
-        checksumData.insert(checksumData.end(), i.begin(), i.end());
+        //checksumData.insert(checksumData.end(), i.begin(), i.end());
     }
 
-    uint64_t check[2] = { 0, 0 };
-    MurmurHash3_x64_128(checksumData.data(), static_cast<int>(checksumData.size()), 0, check);
-    std::memcpy(&output[checkInd], check, 16);
+    //uint64_t check[2] = { 0, 0 };
+    //MurmurHash3_x64_128(checksumData.data(), static_cast<int>(checksumData.size()), 0, check);
+    //std::memcpy(&output[checkInd], check, 16);
 
     return output;
 }

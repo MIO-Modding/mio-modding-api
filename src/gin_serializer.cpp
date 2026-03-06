@@ -46,7 +46,7 @@ std::vector<char> RecompileGin(std::pair<GinKey, std::map<std::string, std::pair
         if (flags & (1 << 4)) { // ZSTD
             size_t maxCompressedSize = ZSTD_compressBound(uncompressedSize);
             finalData.resize(maxCompressedSize);
-            compressedSize = ZSTD_compress(finalData.data(), maxCompressedSize, data.data(), uncompressedSize, 0);
+            compressedSize = ZSTD_compress(finalData.data(), maxCompressedSize, data.data(), uncompressedSize, 3);
             finalData.resize(compressedSize);
         }
         else if (flags & (1 << 5)) { // LZ4

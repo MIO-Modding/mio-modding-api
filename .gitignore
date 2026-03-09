@@ -2,6 +2,7 @@
 build/
 install/
 out/
+x64/
 
 # Visual Studio
 .vs/

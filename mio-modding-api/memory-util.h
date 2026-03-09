@@ -1,6 +1,5 @@
 #pragma once
-
-#include <Windows.h>
+#include "pch.h"
 
 
 bool WriteMemory(void* address, const void* data, size_t size);

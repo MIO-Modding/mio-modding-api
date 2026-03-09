@@ -71,10 +71,10 @@ typedef struct SaveEntry { // 88 bytes
 extern "C" {
 // Initialization
 MODDING_API void InitializeAddresses();
+MODDING_API void InitializeHooks();
 
 // Function Hooks
 MODDING_API void RunOnEnemyHit(std::function<void(uintptr_t, uintptr_t)> callback);
-MODDING_API void InitializeHooks();
 
 // Player functions
 MODDING_API f32x3 GetPlayerLocation();

@@ -395,8 +395,8 @@ void InitializeModAPI() {
   // Initialize addresses from Cheat Engine findings
   InitializeAddresses();
 
-  // Create function hooks
-  std::thread hook_init_thread(InitializeHooks);
+  // Create function hooks. This has to run in its own thread so the code can continue while the hooks listen.
+  std::thread hook_thread(InitializeHooks);
 
   printf("Disabling DWM...");
   DisableDWM(); // Needed for GUI mods on some systems
@@ -410,6 +410,7 @@ void InitializeModAPI() {
   printf("Modding API ready!\n");
   printf("==============================================\n\n");
 
+  // If the API would terminate, so would the hook thread.
   while (true) {
       Sleep(1000);
   }

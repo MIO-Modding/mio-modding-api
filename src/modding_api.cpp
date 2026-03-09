@@ -52,30 +52,23 @@ void *FollowPointer(void *basePtr, int offset) {
 std::vector<std::function<void(uintptr_t, uintptr_t)>> enemyhit_hooks;
 uintptr_t enemyhit_trampoline = NULL;
 
-NOINLINE void __cdecl resolve_enemyhit_hook(uintptr_t enemy_info_address, uintptr_t hit_info_address) {
+NOINLINE void __cdecl ResolveOnEnemyHitHook(uintptr_t enemy_info_address, uintptr_t hit_info_address) {
+
+    // Run all functions connected to this event
     for (int i = 0; i < enemyhit_hooks.size(); i++) {
         enemyhit_hooks[i](enemy_info_address, hit_info_address);
     }
+
+    // Run the original Enemy Hit function (at the address provided in enemyhit_trampoline)
     typedef int func(uintptr_t, uintptr_t);
     func* trampoline = (func*)(enemyhit_trampoline);
     int i = trampoline(enemy_info_address, hit_info_address);
-    LogMessage("Trampoline executed; Trampoline address:");
-    LogMessage(std::to_string(enemyhit_trampoline).c_str());
 }
 
 MODDING_API void RunOnEnemyHit(std::function<void(uintptr_t, uintptr_t)> callback) {
     enemyhit_hooks.push_back(callback);
 }
 
-
-MODDING_API void InitializeHooks() {
-    PLH::NatDetour enemyhit_hook_detour = PLH::NatDetour((uintptr_t)ModAPI::g_OnEnemyHitAddr, (uintptr_t)resolve_enemyhit_hook, &enemyhit_trampoline);
-    enemyhit_hook_detour.hook();
-
-    while (true) {
-        Sleep(100000);
-    }
-}
 
 // ========================================
 // Memory Functions
@@ -443,6 +436,17 @@ MODDING_API void InitializeAddresses() {
   ModAPI::g_PlayerVelocityYAddr = (void *)(baseAddr + 0x10EE0CC);
 
   ModAPI::g_OnEnemyHitAddr = (void*)onEnemyHitAddr;
+}
+
+MODDING_API void InitializeHooks() {
+    // Create a hook forwarding g_onEnemyHitAddr to ResolveOnEnemyHitHook.
+    PLH::NatDetour enemyhit_hook_detour = PLH::NatDetour((uintptr_t)ModAPI::g_OnEnemyHitAddr, (uintptr_t)ResolveOnEnemyHitHook, &enemyhit_trampoline);
+    enemyhit_hook_detour.hook();
+
+    // The Hook Initialization method has to run in the background indefinitely for the hooks to "listen".
+    while (true) {
+        Sleep(100000);
+    }
 }
 
 // ========================================

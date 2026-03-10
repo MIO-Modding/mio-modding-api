@@ -438,13 +438,8 @@ MODDING_API void InitializeAddresses() {
 
 MODDING_API void InitializeHooks() {
     // Create a hook forwarding g_onEnemyHitAddr to ResolveOnEnemyHitHook.
-    PLH::NatDetour enemyhit_hook_detour = PLH::NatDetour((uintptr_t)ModAPI::g_OnEnemyHitAddr, (uintptr_t)ResolveOnEnemyHitHook, &enemyhit_trampoline);
+    static PLH::NatDetour enemyhit_hook_detour = PLH::NatDetour((uintptr_t)ModAPI::g_OnEnemyHitAddr, (uintptr_t)ResolveOnEnemyHitHook, &enemyhit_trampoline);
     enemyhit_hook_detour.hook();
-
-    // The Hook Initialization method has to run in the background indefinitely for the hooks to "listen".
-    while (true) {
-        Sleep(100000);
-    }
 }
 
 // ========================================

@@ -395,7 +395,7 @@ void InitializeModAPI() {
   InitializeAddresses();
 
   // Create function hooks. This has to run in its own thread so the code can continue while the hooks listen.
-  std::thread hook_thread(InitializeHooks);
+  InitializeHooks();
 
   printf("Disabling DWM...");
   DisableDWM(); // Needed for GUI mods on some systems
@@ -409,7 +409,7 @@ void InitializeModAPI() {
   printf("Modding API ready!\n");
   printf("==============================================\n\n");
 
-  // If the API would terminate, so would the hook thread.
+  // If the API would terminate, so would the hooks.
   while (true) {
       Sleep(1000);
   }

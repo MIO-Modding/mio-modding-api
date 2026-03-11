@@ -2,7 +2,8 @@
 #include <psapi.h>
 #include "mio-modding-api.h"
 
-bool WriteMemory(void* address, const void* data, size_t size) {
+extern "C" {
+MODDING_API bool WriteMemory(void* address, const void* data, size_t size) {
     DWORD oldProtect;
     if (!VirtualProtect(address, size, PAGE_EXECUTE_READWRITE, &oldProtect)) {
         return false;
@@ -12,7 +13,7 @@ bool WriteMemory(void* address, const void* data, size_t size) {
     return true;
 }
 
-bool ReadMemory(void* address, void* buffer, size_t size) {
+MODDING_API bool ReadMemory(void* address, void* buffer, size_t size) {
     DWORD oldProtect;
     if (!VirtualProtect(address, size, PAGE_READONLY, &oldProtect)) {
         return false;
@@ -22,7 +23,7 @@ bool ReadMemory(void* address, void* buffer, size_t size) {
     return true;
 }
 
-bool PatchBytes(void* address, const char* bytes, size_t size) {
+MODDING_API bool PatchBytes(void* address, const char* bytes, size_t size) {
     DWORD oldProtect;
     if (!VirtualProtect(address, size, PAGE_EXECUTE_READWRITE, &oldProtect)) {
         return false;
@@ -32,7 +33,7 @@ bool PatchBytes(void* address, const char* bytes, size_t size) {
     return true;
 }
 
-bool NopBytes(void* address, size_t count) {
+MODDING_API bool NopBytes(void* address, size_t count) {
     DWORD oldProtect;
     if (!VirtualProtect(address, count, PAGE_EXECUTE_READWRITE, &oldProtect)) {
         return false;
@@ -42,7 +43,7 @@ bool NopBytes(void* address, size_t count) {
     return true;
 }
 
-void* PatternScan(HMODULE module, const char* pattern, const char* mask) {
+MODDING_API void* PatternScan(HMODULE module, const char* pattern, const char* mask) {
     MODULEINFO moduleInfo;
     GetModuleInformation(GetCurrentProcess(), module, &moduleInfo,
         sizeof(MODULEINFO));
@@ -64,7 +65,7 @@ void* PatternScan(HMODULE module, const char* pattern, const char* mask) {
     }
     return nullptr;
 }
-void* PatternScanReverse(HMODULE module, void* from, const char* pattern, const char* mask) {
+MODDING_API void* PatternScanReverse(HMODULE module, void* from, const char* pattern, const char* mask) {
     char* base = (char*)module;
     size_t patternLength = strlen(mask);
 
@@ -80,4 +81,16 @@ void* PatternScanReverse(HMODULE module, void* from, const char* pattern, const 
             return &base[i];
     }
     return nullptr;
+}
+
+MODDING_API void* FollowPointer(void* basePtr, int offset) {
+    if (!basePtr)
+        return nullptr;
+
+    void* ptr = *(void**)basePtr;
+    if (!ptr)
+        return nullptr;
+
+    return (void*)((uintptr_t)ptr + offset);
+}
 }

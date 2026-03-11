@@ -35,10 +35,10 @@
     <ClCompile Include="memory-util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="player-util.cpp">
+    <ClCompile Include="player.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="save-entry-util.cpp">
+    <ClCompile Include="save-data.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

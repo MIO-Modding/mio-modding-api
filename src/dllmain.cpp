@@ -394,7 +394,7 @@ void InitializeModAPI() {
   // Initialize addresses from Cheat Engine findings
   InitializeAddresses();
 
-  printf("Disabling DWM...");
+  printf("Disabling DWM...\n");
   DisableDWM(); // Needed for GUI mods on some systems
 
   printf("==============================================\n\n");
@@ -405,6 +405,10 @@ void InitializeModAPI() {
   printf("\n==============================================\n");
   printf("Modding API ready!\n");
   printf("==============================================\n\n");
+
+  // Start a thread to monitor for save loads/unloads
+  CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)MonitorSaveLoads, nullptr, 0,
+               nullptr);
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call,

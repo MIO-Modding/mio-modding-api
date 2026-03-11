@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <windows.h>
 
+using u8 = std::uint8_t;
 using u32 = std::uint32_t;
 using u64 = std::uint64_t;
 using i32 = std::int32_t;
@@ -65,9 +66,28 @@ typedef struct SaveEntry { // 88 bytes
   SaveEntryValue value;    // 64 bytes
 } SaveEntry;
 
+enum MenuState {
+  Start,          // 0
+  Splashes,       // 1
+  Shader_spinner, // 2
+  Main_menu,      // 3
+  Game,           // 4
+  Credits,        // 5
+  Exit            // 6
+};
+
 extern "C" {
 // Initialization
 MODDING_API void InitializeAddresses();
+MODDING_API void InitializeSaveEntryHashMap();
+char *AllocateString(const char *str);
+MODDING_API void MonitorSaveLoads();
+
+// Menu functions
+MODDING_API MenuState GetGameMenuState();
+MODDING_API bool SetGameMenuState(MenuState state);
+MODDING_API bool CheckIfSaveLoaded();
+MODDING_API void WaitForSaveLoad();
 
 // Player functions
 MODDING_API f32x3 GetPlayerLocation();
@@ -89,6 +109,7 @@ MODDING_API SaveEntry *GetSaveEntryByIndex(int index);
 MODDING_API SaveEntry *GetSaveEntry(const char *name);
 MODDING_API bool SaveEntryExists(const char *name);
 MODDING_API const char *GetSaveEntryName(int index);
+MODDING_API bool CreateSaveEntry(const char *name, u32 flags, i32 count);
 
 // Helper functions for reading/writing save entry count
 MODDING_API bool GetSaveEntryValueCount(const char *name, i32 *outCount);

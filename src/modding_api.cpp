@@ -18,12 +18,26 @@ void **g_PlayerNacreBasePtr = nullptr;
 void ***g_SaveArrayPtr = nullptr;
 u32 *g_SaveArraySize = nullptr;
 
+void *g_menuStateAddr = nullptr;
+
 // Offsets from Cheat Engine pointer scan
 const int PLAYER_X_OFFSET = 0x18;
 const int PLAYER_Y_OFFSET = 0x1C; // Usually Y is 4 bytes after X
 const int PLAYER_Z_OFFSET = 0x20; // Usually Z is 4 bytes after Y
 const int PLAYER_HEALTH_OFFSET = 0xD4;
 const int PLAYER_LIQUID_NACRE_OFFSET = 0x754;
+
+// Custom save entry hashmap stuff
+const int ENTRY_SIZE = 88; // sizeof(SaveEntry)
+const int HASHMAP_CAPACITY = 8192;
+SaveEntry *customHashmap = nullptr;
+u32 customHashmapSize = 0;
+bool hashmapInitialized = false;
+MenuState lastMenuState = MenuState::Start; // Track menu state changes
+
+char *stringBuffer = nullptr;
+const size_t STRING_BUFFER_SIZE = 1024 * 1024; // 1MB
+size_t stringBufferOffset = 0;
 } // namespace ModAPI
 
 // Helper function to follow pointer chain
@@ -104,6 +118,56 @@ MODDING_API void *PatternScan(const char *pattern, const char *mask) {
       return &base[i];
   }
   return nullptr;
+}
+
+// ========================================
+// Menu Functions
+// ========================================
+
+MODDING_API MenuState GetGameMenuState() {
+  if (!ModAPI::g_menuStateAddr) {
+    return MenuState::Start;
+  }
+
+  volatile int *ptr = reinterpret_cast<volatile int *>(ModAPI::g_menuStateAddr);
+
+  return static_cast<MenuState>(*ptr);
+}
+
+MODDING_API bool SetGameMenuState(MenuState state) {
+  if (!ModAPI::g_menuStateAddr) {
+    return false;
+  }
+
+  int *ptr = reinterpret_cast<int *>(ModAPI::g_menuStateAddr);
+  int new_value = state;
+
+  return WriteMemoryTyped(ptr, new_value);
+}
+
+MODDING_API bool CheckIfSaveLoaded() {
+  if (!ModAPI::g_menuStateAddr) {
+    return false;
+  }
+
+  return (MenuState::Game == GetGameMenuState());
+}
+
+MODDING_API void WaitForSaveLoad() {
+  while (!ModAPI::g_menuStateAddr) {
+    Sleep(100); // Prevent CPU burn
+  }
+
+  while (true) {
+    if (CheckIfSaveLoaded()) {
+      break;
+    }
+
+    Sleep(100); // Prevent CPU burn
+  }
+
+  // small extra delay to let subsystems finish initializing
+  Sleep(500);
 }
 
 // ========================================
@@ -385,6 +449,8 @@ MODDING_API void InitializeAddresses() {
   uintptr_t playerNacreBasePtrAddr = baseAddr + 0x01114AD0;
   uintptr_t playerStaminaPtrAddr = baseAddr + 0x110F9A8;
 
+  uintptr_t menuStateAddr = baseAddr + 0x10DFC88;
+
   uintptr_t saveArrayPtrAddr = baseAddr + 0x01114AD0;
   uintptr_t saveArraySizeAddr = baseAddr + 0x01114AC8;
 
@@ -395,10 +461,271 @@ MODDING_API void InitializeAddresses() {
 
   ModAPI::g_PlayerStaminaAddr = (void *)playerStaminaPtrAddr;
 
+  ModAPI::g_menuStateAddr = (void *)menuStateAddr;
+
   ModAPI::g_SaveArrayPtr = (void ***)saveArrayPtrAddr;
   ModAPI::g_SaveArraySize = (uint32_t *)saveArraySizeAddr;
   ModAPI::g_PlayerVelocityXAddr = (void *)(baseAddr + 0x10EE0C8);
   ModAPI::g_PlayerVelocityYAddr = (void *)(baseAddr + 0x10EE0CC);
+}
+
+// MODDING_API void InitializeSaveEntryHashMap() {
+// WaitForSaveLoad();
+//
+// char msg[256];
+//
+// sprintf_s(msg, "Initializing custom save entry hashmap...");
+// LogMessage(msg);
+//
+// sprintf_s(msg, "Custom hashmap address: %p", (void *)ModAPI::customHashmap);
+// LogMessage(msg);
+//
+// sprintf_s(msg, "Custom hashmap capacity: %d entries",
+// ModAPI::HASHMAP_CAPACITY);
+// LogMessage(msg);
+//
+// sprintf_s(msg, "Custom hashmap size: %zu bytes",
+// sizeof(ModAPI::customHashmap));
+// LogMessage(msg);
+// sprintf_s(msg, "Original HashMapPtr: %p", (void *)ModAPI::g_SaveArrayPtr);
+// LogMessage(msg);
+//
+// Zero out the custom hashmap memset(ModAPI::customHashmap, 0,
+//  sizeof(ModAPI::customHashmap));
+//
+// Get the original save array info
+// if (!ModAPI::g_SaveArrayPtr ||
+// !*ModAPI::g_SaveArrayPtr ||
+// !ModAPI::g_SaveArraySize) {
+// LogMessage("ERROR: Save array pointers not
+// initialized!"); LogMessage( "We probably
+// need to wait until the save is loaded.");
+// // THIS!!! LOOK
+//  HERE MARS!!!
+//  THIS IS PAST
+//  YOU TRYING TO
+//  SAVE NOW
+//  PRESENT TIME
+//  YOU HOURS OF
+//  PAIN AND
+//  MULTIPLE
+//  MENTAL
+//  BREAKDOWNS!!!
+//  CHECK IF
+//  CARNAVAL HAS
+//  SENT YOU ANY
+//  IDEAS!!!
+// if (!ModAPI::g_SaveArrayPtr) {
+// LogMessage("\t!ModAPI::g_SaveArrayPtr");
+// }
+// if (!*ModAPI::g_SaveArrayPtr) {
+// LogMessage("\t!*ModAPI::g_SaveArrayPtr");
+// }
+// if (!ModAPI::g_SaveArraySize) {
+// LogMessage("\t!ModAPI:g_SazeArraySize");
+// }
+// return;
+// }
+
+MODDING_API void InitializeSaveEntryHashMap() {
+  char msg[256];
+
+  sprintf_s(msg, "Initializing custom save entry hashmap...");
+  LogMessage(msg);
+
+  // Allocate the hashmap in the game's memory space if not already allocated
+  if (!ModAPI::customHashmap) {
+    size_t hashmapSize = ModAPI::ENTRY_SIZE * ModAPI::HASHMAP_CAPACITY;
+
+    LogMessage("Allocating custom hashmap in game memory space...");
+    ModAPI::customHashmap = (SaveEntry *)VirtualAlloc(
+        nullptr,                  // Let system choose address
+        hashmapSize,              // Size
+        MEM_COMMIT | MEM_RESERVE, // Commit and reserve
+        PAGE_READWRITE            // Read/write access
+    );
+
+    if (!ModAPI::customHashmap) {
+      LogMessage("ERROR: Failed to allocate custom hashmap!");
+      return;
+    }
+
+    sprintf_s(msg, "Allocated custom hashmap at: %p (size: %zu bytes)",
+              (void *)ModAPI::customHashmap, hashmapSize);
+    LogMessage(msg);
+  }
+
+  // Allocate string buffer if not already allocated
+  if (!ModAPI::stringBuffer) {
+    LogMessage("Allocating string buffer in game memory space...");
+    ModAPI::stringBuffer =
+        (char *)VirtualAlloc(nullptr, ModAPI::STRING_BUFFER_SIZE,
+                             MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+    if (!ModAPI::stringBuffer) {
+      LogMessage("ERROR: Failed to allocate string buffer!");
+      return;
+    }
+
+    sprintf_s(msg, "Allocated string buffer at: %p (size: %zu bytes)",
+              (void *)ModAPI::stringBuffer, ModAPI::STRING_BUFFER_SIZE);
+    LogMessage(msg);
+
+    ModAPI::stringBufferOffset = 0;
+  }
+
+  sprintf_s(msg, "Custom hashmap capacity: %d entries",
+            ModAPI::HASHMAP_CAPACITY);
+  LogMessage(msg);
+
+  sprintf_s(msg, "Custom hashmap size: %zu bytes",
+            sizeof(ModAPI::customHashmap));
+  LogMessage(msg);
+
+  // Zero out the custom hashmap
+  memset(ModAPI::customHashmap, 0, sizeof(ModAPI::customHashmap));
+  ModAPI::customHashmapSize = 0;
+  ModAPI::stringBufferOffset = 0;
+
+  // Get the original save array info
+  if (!ModAPI::g_SaveArrayPtr || !*ModAPI::g_SaveArrayPtr ||
+      !ModAPI::g_SaveArraySize) {
+    LogMessage("WARNING: Save array pointers not ready yet");
+    return;
+  }
+
+  SaveEntry *originalEntries = (SaveEntry *)*ModAPI::g_SaveArrayPtr;
+  u32 originalCount = *ModAPI::g_SaveArraySize;
+
+  // Check if save data is actually loaded
+  if (originalCount == 0 || originalEntries == nullptr) {
+    LogMessage("WARNING: Save data not loaded yet");
+    if (!ModAPI::g_SaveArrayPtr) {
+      LogMessage("\t!ModAPI::g_SaveArrayPtr");
+    }
+    if (!*ModAPI::g_SaveArrayPtr) {
+      LogMessage("\t!*ModAPI::g_SaveArrayPtr");
+    }
+    if (!ModAPI::g_SaveArraySize) {
+      LogMessage("\t!ModAPI:g_SazeArraySize");
+    }
+    return;
+  }
+
+  sprintf_s(msg, "Original hashmap has %d entries", originalCount);
+  LogMessage(msg);
+
+  // Copy existing entries to custom hashmap
+  if (originalCount > ModAPI::HASHMAP_CAPACITY) {
+    sprintf_s(msg,
+              "WARNING: Original hashmap has more entries (%d) than custom "
+              "capacity (%d)!",
+              originalCount, ModAPI::HASHMAP_CAPACITY);
+    LogMessage(msg);
+    originalCount = ModAPI::HASHMAP_CAPACITY;
+  }
+
+  sprintf_s(msg, "Copying %d entries from original hashmap...", originalCount);
+  LogMessage(msg);
+
+  // Use try-catch to handle potential crashes
+  __try {
+    for (u32 i = 0; i < originalCount; i++) {
+      SaveEntry *originalEntry =
+          (SaveEntry *)((char *)originalEntries + (i * ModAPI::ENTRY_SIZE));
+      memcpy(&ModAPI::customHashmap[i], originalEntry, ModAPI::ENTRY_SIZE);
+    }
+  } __except (EXCEPTION_EXECUTE_HANDLER) {
+    LogMessage("ERROR: Exception while copying entries!");
+    ModAPI::hashmapInitialized = false;
+    return;
+  }
+
+  ModAPI::customHashmapSize = originalCount;
+
+  sprintf_s(msg, "Copied %d entries to custom hashmap",
+            ModAPI::customHashmapSize);
+  LogMessage(msg);
+
+  // Redirect game pointers to use custom hashmap
+  sprintf_s(msg, "Redirecting game pointers to custom hashmap...");
+  LogMessage(msg);
+
+  // Update the pointer to point to our custom hashmap
+  *ModAPI::g_SaveArrayPtr = (void **)ModAPI::customHashmap;
+
+  // Update the size
+  *ModAPI::g_SaveArraySize = ModAPI::HASHMAP_CAPACITY;
+
+  sprintf_s(msg, "Game now using custom hashmap at %p with %d max entries",
+            (void *)ModAPI::customHashmap, ModAPI::HASHMAP_CAPACITY);
+  LogMessage(msg);
+
+  ModAPI::hashmapInitialized = true;
+  LogMessage("Custom save entry hashmap initialized successfully!");
+}
+
+char *AllocateString(const char *str) {
+  if (!ModAPI::stringBuffer) {
+    LogMessage("ERROR: String buffer not allocated!");
+    return nullptr;
+  }
+
+  size_t len = strlen(str) + 1;
+  if (ModAPI::stringBufferOffset + len >= ModAPI::STRING_BUFFER_SIZE) {
+    LogMessage("ERROR: String buffer full!");
+    return nullptr;
+  }
+
+  char *allocated = &ModAPI::stringBuffer[ModAPI::stringBufferOffset];
+  strcpy(allocated, str);
+  ModAPI::stringBufferOffset += len;
+
+  return allocated;
+}
+
+MODDING_API void MonitorSaveLoads() {
+  LogMessage("Save load monitor thread started");
+
+  while (true) {
+    Sleep(100); // Check every 100ms
+
+    MenuState currentState = GetGameMenuState();
+
+    // Detect transition from main menu -> game (save load)
+    if (ModAPI::lastMenuState != MenuState::Game &&
+        currentState == MenuState::Game) {
+      LogMessage("==============================================");
+      LogMessage("Detected save load! Reinitializing hashmap...");
+      LogMessage("==============================================");
+
+      // Wait a moment for save data to fully load
+      Sleep(1000);
+
+      // Mark as uninitialized
+      ModAPI::hashmapInitialized = false;
+
+      // Reinitialize the hashmap with the new save data
+      InitializeSaveEntryHashMap();
+
+      if (ModAPI::hashmapInitialized) {
+        LogMessage("Hashmap reinitialized successfully!");
+      } else {
+        LogMessage("WARNING: Failed to reinitialize hashmap");
+      }
+    }
+
+    // Detect transition from game -> main menu (save unload)
+    if (ModAPI::lastMenuState == MenuState::Game &&
+        currentState != MenuState::Game) {
+      LogMessage("==============================================");
+      LogMessage("Detected save unload (returned to menu)");
+      LogMessage("==============================================");
+      ModAPI::hashmapInitialized = false;
+    }
+
+    ModAPI::lastMenuState = currentState;
+  }
 }
 
 // ========================================

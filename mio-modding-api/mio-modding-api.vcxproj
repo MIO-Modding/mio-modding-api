@@ -89,6 +89,18 @@
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnableManifest>true</VcpkgEnableManifest>
   </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -97,6 +109,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -123,6 +136,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -130,7 +144,7 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>call "$(ProjectDir)post-build.bat" "$(TargetDir)$(ProjectName)" "$(ProjectDir)Mod" "$(TargetDir)$(TargetFileName)" "$(TargetDir)$(ProjectName)\$(TargetFileName)"</Command>
+      <Command>call "$(ProjectDir)post-build.bat" "$(TargetDir)" "$(ProjectDir)Mod\" "$(TargetFileName)" "$(TargetDir)$(ProjectName)\"</Command>
       <Message>
       </Message>
     </PostBuildEvent>
@@ -148,6 +162,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -175,6 +190,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -182,7 +198,7 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>call "$(ProjectDir)post-build.bat" "$(TargetDir)$(ProjectName)" "$(ProjectDir)Mod" "$(TargetDir)$(TargetFileName)" "$(TargetDir)$(ProjectName)\$(TargetFileName)"</Command>
+      <Command>call "$(ProjectDir)post-build.bat" "$(TargetDir)" "$(ProjectDir)Mod\" "$(TargetFileName)" "$(TargetDir)$(ProjectName)\"</Command>
       <Message>
       </Message>
     </PostBuildEvent>
@@ -192,10 +208,15 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="flamby-handling.h" />
+    <ClInclude Include="gin-serialization.h" />
+    <ClInclude Include="mio-modding-api-internal.h" />
     <ClInclude Include="mio-modding-api.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="flamby-handling.cpp" />
+    <ClCompile Include="gin-serialization.cpp" />
     <ClCompile Include="hooks.cpp" />
     <ClCompile Include="memory-util.cpp" />
     <ClCompile Include="player.cpp" />

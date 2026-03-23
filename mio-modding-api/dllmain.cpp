@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include "mio-modding-api.h"
 #include <string>
+#include "mio-modding-api-internal.h"
+#include "flamby-handling.h"
 
 namespace ModAPI {
 	// Constant addresses
@@ -96,6 +98,19 @@ extern "C" __declspec(dllexport) void ModInit(char* id) {
 	LoadMemoryAddresses();
 
 	ModAPI::Hooks::InitializeHooks();
+
+	LogMessage("Loading Flamby Data");
+	LoadFlambyData(fs::path("flamby"));
+	LogMessage("Loaded Flamby Data");
+
+	//Warning: This file exists on my pc not in the repo
+	ModifyGin("flamby/assets.gin", "texture_42", "decomp/156597_texture_42.dds");
+
+	PatchChecksum();
+
+	LogMessage("Applying Flamby Data");
+	ApplyFlambyData();
+	LogMessage("Applying Flamby Data");
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule,

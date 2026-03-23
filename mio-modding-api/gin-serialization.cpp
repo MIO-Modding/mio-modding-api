@@ -71,11 +71,11 @@ std::vector<char> RecompileGin(std::pair<GinKey, std::map<std::string, std::pair
         std::copy(std::begin(i.second.first.params), std::end(i.second.first.params), std::begin(info.params));
         info.ver = i.second.first.ver;
         std::copy(std::begin(i.second.first.id), std::end(i.second.first.id), std::begin(info.id));
-        std::copy(std::begin(i.second.first.check), std::end(i.second.first.check), std::begin(info.check));
         info.offset = offset;
 
         uint64_t sectionCheck[2] = { 0, 0 };
-        MurmurHash3_x64_128(finalData.data(), static_cast<int>(finalData.size()), 0, sectionCheck);
+        //MurmurHash3_x64_128(finalData.data(), static_cast<int>(finalData.size()), 0, sectionCheck);
+		std::copy(std::begin(sectionCheck), std::end(sectionCheck), std::begin(info.check));
 
         std::vector<char> sectionVector;
         WriteToVector<char[64]>(sectionVector, info.name);

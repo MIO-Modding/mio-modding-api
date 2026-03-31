@@ -201,6 +201,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="general-util.cpp" />
     <ClCompile Include="hooks.cpp" />
     <ClCompile Include="memory-util.cpp" />
     <ClCompile Include="player.cpp" />

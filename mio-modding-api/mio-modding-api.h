@@ -178,6 +178,11 @@ namespace ModAPI {
 		namespace Combat {
 			MODDING_API void RunOnHitEnemy(std::function<void(uintptr_t, uintptr_t)> callback);
 		}
+		namespace Time {
+			MODDING_API void SetTimeScale(float scale);
+			MODDING_API float GetTimeScale();
+			MODDING_API void RunOnTick(std::function<void(float)> callback);
+		}
 		MODDING_API void InitializeHooks();
 	}
 }

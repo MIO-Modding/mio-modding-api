@@ -4,8 +4,6 @@
 #include <vector>
 #include <functional>
 
-
-
 namespace ModAPI {
 	namespace Hooks {
 		namespace Combat {
@@ -31,10 +29,64 @@ namespace ModAPI {
 			}
 		}
 
+		namespace Time {
+			float g_timeScale = 1.0f;
+			uintptr_t rtlqpc_trampoline = NULL;
+			std::vector<std::function<void(float)>> ontick_hooks;
+
+			NOINLINE BOOL __stdcall ResolveRtlQPCHook(PLARGE_INTEGER PerformanceCount) {
+				typedef BOOL(*func)(PLARGE_INTEGER);
+				func trampoline = (func)(rtlqpc_trampoline);
+
+				BOOL result = trampoline(PerformanceCount);
+
+				static bool initialized = false;
+				static LONGLONG lastRealCount = 0;
+				static double accumulatedCount = 0.0;
+
+				if (!initialized) {
+					lastRealCount = PerformanceCount->QuadPart;
+					accumulatedCount = (double)PerformanceCount->QuadPart;
+					initialized = true;
+					return result;
+				}
+
+				LONGLONG delta = PerformanceCount->QuadPart - lastRealCount;
+				accumulatedCount += (double)delta * g_timeScale;
+				lastRealCount = PerformanceCount->QuadPart;
+
+				PerformanceCount->QuadPart = (LONGLONG)accumulatedCount;
+
+				for (auto& hook : ontick_hooks) {
+					hook((float)delta * g_timeScale);
+				}
+
+				return result;
+			}
+
+			MODDING_API void SetTimeScale(float scale) {
+				g_timeScale = scale;
+			}
+
+			MODDING_API float GetTimeScale() {
+				return g_timeScale;
+			}
+
+			MODDING_API void RunOnTick(std::function<void(float)> callback) {
+				ontick_hooks.push_back(callback);
+			}
+		}
+
 		// Initialize and connect hooks
 		MODDING_API void InitializeHooks() {
 			static PLH::NatDetour enemyhit_hook_detour = PLH::NatDetour((uintptr_t)ModAPI::Addresses::g_HitEnemyAddress, (uintptr_t)Combat::ResolveOnHitEnemyHook, &Combat::hitenemy_trampoline);
 			enemyhit_hook_detour.hook();
+
+			static PLH::NatDetour rtlqpc_detour = PLH::NatDetour(
+				(uintptr_t)GetProcAddress(GetModuleHandleA("ntdll.dll"), "RtlQueryPerformanceCounter"),
+				(uintptr_t)Time::ResolveRtlQPCHook,
+				&Time::rtlqpc_trampoline);
+			rtlqpc_detour.hook();
 		}
 	}
 }

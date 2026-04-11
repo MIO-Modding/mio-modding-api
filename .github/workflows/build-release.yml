@@ -20,7 +20,7 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Build DLL
-        run: msbuild YourSolution.sln /p:Configuration=Release /p:Platform=x64
+        run: msbuild mio-modding-api.sln /p:Configuration=Release /p:Platform=x64
 
       - name: Package release assets
         run: |

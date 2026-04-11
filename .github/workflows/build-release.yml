@@ -23,7 +23,7 @@ jobs:
         uses: lukka/run-vcpkg@v11
 
       - name: Integrate vcpkg with MSBuild
-        run: $env:VCPKG_ROOT/vcpkg integrate install
+        run: $env:VCPKG_ROOT\vcpkg integrate install
         shell: pwsh
 
       - name: Build DLL

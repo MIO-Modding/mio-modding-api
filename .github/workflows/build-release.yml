@@ -22,12 +22,18 @@ jobs:
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
 
+      - name: Integrate vcpkg with MSBuild
+        run: $env:VCPKG_ROOT/vcpkg integrate install
+        shell: pwsh
+
       - name: Build DLL
         run: msbuild mio-modding-api.sln /p:Configuration=Release /p:Platform=x64
+        shell: pwsh
 
       - name: Package release assets
         run: |
-          Copy-Item "src/mio-modding-api.h" "x64/Release/mio-modding-api.h"
+          Compress-Archive -Path "x64/Release/mio-modding-api/*" -DestinationPath "x64/Release/mio-modding-api.zip"
+          Copy-Item "mio-modding-api/mio-modding-api.h" "x64/Release/mio-modding-api.h"
         shell: pwsh
 
       - name: Upload artifacts (for testing)

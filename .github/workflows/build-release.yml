@@ -19,6 +19,9 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+
       - name: Build DLL
         run: msbuild mio-modding-api.sln /p:Configuration=Release /p:Platform=x64
 

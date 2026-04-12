@@ -117,6 +117,8 @@ namespace ModAPI {
 	 * instead of accessing these directly.
 	 */
 	namespace Addresses {
+		extern uintptr_t g_BaseAddr;		///< Base Address for the mio.exe.
+
 		extern void* g_PlayerStaminaAddr;	///< Direct address of the player's stamina value.
 		extern void* g_PlayerVelocityXAddr; ///< Direct address of the player's X velocity value, offset from the player object.
 		extern void* g_PlayerVelocityYAddr; ///< Direct address of the player's Y velocity value, offset from the player object.
@@ -124,6 +126,7 @@ namespace ModAPI {
 		extern void* g_PlayerObjAddr;		///< Direct address of the player object.
 		extern void* g_HitEnemyAddress;		///< Address of the game's internal hit enemy function.
 		extern void* g_MenuStateAddr;		///< Direct address of the current menu state value.
+		extern void* g_GiveFlagAddress;		///< Address of the game's internal give flag function.
 	} // namespace Addresses
 
 	/**
@@ -362,6 +365,13 @@ namespace ModAPI {
 			 * @return True on success, false if the entry was not found.
 			 */
 			MODDING_API bool SetSaveEntryValueFlags(const char* name, uint32_t flags);
+			/**
+			 * @brief Increases the amount for a flag
+			 * @param flag The flag to increase.
+			 * @param amount The amount to increase the flag by.
+			 * @return The game's internal return value from the give flag method.
+			 */
+			MODDING_API char* GiveFlag(const char* flag, int32_t amount);
 		}
 	} // namespace SaveData
 

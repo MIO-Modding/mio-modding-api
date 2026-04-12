@@ -7,6 +7,7 @@
 namespace ModAPI {
 	// Constant addresses
 	namespace Addresses {
+		uintptr_t g_BaseAddr;
 		void* g_PlayerStaminaAddr = nullptr;
 		void* g_PlayerVelocityXAddr = nullptr;
 		void* g_PlayerVelocityYAddr = nullptr;
@@ -14,6 +15,7 @@ namespace ModAPI {
 		void* g_MoveByMethodAddr = nullptr;
 		void* g_PlayerObjAddr = nullptr;
 		void* g_HitEnemyAddress = nullptr;
+		void* g_GiveFlagAddress = nullptr;
 	}
 
 	// Base address for pointer chain
@@ -47,6 +49,21 @@ char* modId;
 void LogMessage(const char* message) {
 	ModAPI::Util::LogMessage(modId, message);
 }
+DWORD ApplyTesting(LPVOID lpParam) {
+	float time = 1000. / 10.;
+	while(true) {
+		Vector3 pos = ModAPI::Player::GetPlayerLocation();
+
+		if(pos.x != -1.0f && pos.y != -1.0f && pos.z != -1.0f) {
+			break;
+		}
+		Sleep(time);
+	}
+	Sleep(2000);
+	ModAPI::SaveData::GiveFlag("RESOURCE:PEARL_SHARDS", 1);
+
+	return 0;
+}
 void LoadMemoryAddresses() {
 	HMODULE hModule = GetModuleHandleA("mio.exe");
 	if (!hModule) {
@@ -71,8 +88,11 @@ void LoadMemoryAddresses() {
 	uintptr_t saveArraySizeAddr = baseAddr + 0x1116bf0;
 
 	uintptr_t hitEnemyFunctionAddress = baseAddr + 0x75ed70;
+	uintptr_t giveFlagFunctionAddress = baseAddr + 0x060ee40;
 
 	// Store the address
+	ModAPI::Addresses::g_BaseAddr = baseAddr;
+
 	ModAPI::Pointers::g_PlayerLocationBasePtr = (void**)playerLocationBasePtrAddr;
 	ModAPI::Pointers::g_PlayerHealthBasePtr = (void**)playerHealthBasePtrAddr;
 	ModAPI::Pointers::g_PlayerNacreBasePtr = (void**)playerNacreBasePtrAddr;
@@ -90,6 +110,7 @@ void LoadMemoryAddresses() {
 	ModAPI::Addresses::g_PlayerVelocityYAddr = (void*)(plrObjAddr + 0x47C);
 
 	ModAPI::Addresses::g_HitEnemyAddress = (void*)hitEnemyFunctionAddress;
+	ModAPI::Addresses::g_GiveFlagAddress = (void*)giveFlagFunctionAddress;
 }
 
 extern "C" __declspec(dllexport) void ModInit(char* id) {
@@ -101,6 +122,7 @@ extern "C" __declspec(dllexport) void ModInit(char* id) {
 	LoadMemoryAddresses();
 
 	ModAPI::Hooks::InitializeHooks();
+	CreateThread(nullptr, 0, ApplyTesting, nullptr, 0, nullptr);
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule,

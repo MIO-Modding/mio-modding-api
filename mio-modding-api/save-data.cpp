@@ -101,6 +101,11 @@ namespace ModAPI {
                 entry->value.flags = flags;
                 return true;
             }
+			MODDING_API char* GiveFlag(const char* flag, int32_t amount) {
+				uintptr_t globalPtrAddr = ModAPI::Addresses::g_BaseAddr + 0x10efbf0;
+				void* actualObject = *reinterpret_cast<void**>(globalPtrAddr);
+				return ModAPI::Util::CallAssembly<char*, void*, const char*, int32_t>(ModAPI::Addresses::g_GiveFlagAddress, actualObject, flag, amount);
+			}
         }
     }
 }

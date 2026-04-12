@@ -1,0 +1,43 @@
+name: Generate and Deploy Docs
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout API repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Doxygen
+        run: sudo apt-get install -y doxygen
+
+      - name: Generate docs
+        run: doxygen docs/Doxyfile
+
+      - name: Checkout Pages repo
+        uses: actions/checkout@v4
+        with:
+          repository: MIO-Modding/MIO-Modding.github.io
+          token: ${{ secrets.PAGES_DEPLOY_TOKEN }}
+          path: pages-repo
+
+      - name: Copy docs to Pages repo
+        run: |
+          rm -rf pages-repo/*
+          cp -r docs/output/html/. pages-repo/
+
+      - name: Commit and push to Pages repo
+        run: |
+          cd pages-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --staged --quiet || git commit -m "Deploy docs from ${{ github.sha }}"
+          git push

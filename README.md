@@ -2,6 +2,8 @@
 
 A modding API for MIO: Memories in Orbit.
 
+Documentation available [here](https://mio-modding.github.io/index.html).
+
 ## Cloning
 ```sh
 git clone --recurse-submodules git@github.com:MIO-Modding/mio-modding-api.git

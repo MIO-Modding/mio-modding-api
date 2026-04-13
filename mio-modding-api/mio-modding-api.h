@@ -271,6 +271,10 @@ namespace ModAPI {
 			char* data;		 ///< Pointer to the string data.
 			uint32_t size;	 ///< Length of the string in bytes.
 			uint32_t unused; ///< Padding - do not use.
+			GameString(char* data) {
+				this->data = data;
+				size = strlen(data);
+			}
 		} GameString;
 		static_assert(sizeof(GameString) == 16, "GameString size mismatch — struct layout may be wrong");
 

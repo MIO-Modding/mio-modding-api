@@ -52,15 +52,17 @@ void LogMessage(const char* message) {
 DWORD ApplyTesting(LPVOID lpParam) {
 	float time = 1000. / 10.;
 	while(true) {
-		Vector3 pos = ModAPI::Player::GetPlayerLocation();
+		while(true) {
+			Vector3 pos = ModAPI::Player::GetPlayerLocation();
 
-		if(pos.x != -1.0f && pos.y != -1.0f && pos.z != -1.0f) {
-			break;
+			if(pos.x != -1.0f && pos.y != -1.0f && pos.z != -1.0f) {
+				break;
+			}
+			Sleep(time);
 		}
 		Sleep(time);
+		ModAPI::SaveData::GiveFlag("RESOURCE:PEARL_SHARDS", 1);
 	}
-	Sleep(2000);
-	ModAPI::SaveData::GiveFlag("RESOURCE:PEARL_SHARDS", 1);
 
 	return 0;
 }

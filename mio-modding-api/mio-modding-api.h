@@ -553,6 +553,23 @@ namespace ModAPI {
 		} // namespace Combat
 
 		/**
+		 * @brief Hooks related to flags.
+		 */
+		namespace Flags {
+			/**
+			 * @brief Registers a callback to be invoked whenever the player is given a flag.
+			 *
+			 * Multiple callbacks can be registered and all will fire on each hit.
+			 *
+			 * @param callback Function to call on enemy hit. Receives two arguments:
+			 *                 - An unknown pointer to an object (uintptr_t)
+			 *                 - A pointer to the GameString for the flag type, You may modify this pointer (GameString*)
+			 *                 - A pointer to the amount of the flag, You may modify this pointer (int32_t*)
+			 */
+			MODDING_API void RunOnGiveFlag(std::function<void(uintptr_t, ModAPI::SaveData::GameString*, int32_t*)> callback);
+		} // namespace Flags
+
+		/**
 		 * @brief Hooks related to game time.
 		 */
 		namespace Time {

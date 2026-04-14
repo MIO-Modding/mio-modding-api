@@ -14,7 +14,7 @@ namespace ModAPI {
 
 			NOINLINE void __cdecl ResolveOnHitEnemyHook(uintptr_t enemy_info_address, uintptr_t hit_info_address) {
 				// Run all functions connected to this event
-				for (int i = 0; i < hitenemy_hooks.size(); i++) {
+				for(int i = 0; i < hitenemy_hooks.size(); i++) {
 					hitenemy_hooks[i](enemy_info_address, hit_info_address);
 				}
 				// Run the original Enemy Hit function (at the address provided in enemyhit_trampoline)
@@ -26,6 +26,30 @@ namespace ModAPI {
 			// Enter a function to call it when an enemy is hit. Parameters are the addresses of enemy data and hit data.
 			MODDING_API void RunOnHitEnemy(std::function<void(uintptr_t, uintptr_t)> callback) {
 				hitenemy_hooks.push_back(callback);
+			}
+		}
+		namespace Flags {
+			// Functions hooked to OnHitEnemy
+			std::vector<std::function<void(uintptr_t, ModAPI::SaveData::GameString*, int32_t*)>> giveflag_hooks;
+
+			uintptr_t giveflag_trampoline = NULL;
+
+			NOINLINE void __cdecl ResolveOnGiveFlag(uintptr_t unknown, ModAPI::SaveData::GameString flag, int32_t amount) {
+				// Run all functions connected to this event
+				ModAPI::SaveData::GameString modifiableFlag = flag;
+				int32_t modifiableAmount = amount;
+				for(int i = 0; i < giveflag_hooks.size(); i++) {
+					giveflag_hooks[i](unknown, &modifiableFlag, &modifiableAmount);
+				}
+				// Run the original Enemy Hit function (at the address provided in enemyhit_trampoline)
+				typedef int func(uintptr_t, ModAPI::SaveData::GameString, int32_t);
+				func* trampoline = (func*)(giveflag_trampoline);
+				int i = trampoline(unknown, modifiableFlag, modifiableAmount);
+			}
+
+			// Enter a function to call it when an enemy is hit. Parameters are the addresses of enemy data and hit data.
+			MODDING_API void RunOnGiveFlag(std::function<void(uintptr_t, ModAPI::SaveData::GameString*, int32_t*)> callback) {
+				giveflag_hooks.push_back(callback);
 			}
 		}
 
@@ -81,6 +105,8 @@ namespace ModAPI {
 		MODDING_API void InitializeHooks() {
 			static PLH::NatDetour enemyhit_hook_detour = PLH::NatDetour((uintptr_t)ModAPI::Addresses::g_HitEnemyAddress, (uintptr_t)Combat::ResolveOnHitEnemyHook, &Combat::hitenemy_trampoline);
 			enemyhit_hook_detour.hook();
+			static PLH::NatDetour giveflag_hook_detour = PLH::NatDetour((uintptr_t)ModAPI::Addresses::g_GiveFlagAddress, (uintptr_t)Flags::ResolveOnGiveFlag, &Flags::giveflag_trampoline);
+			giveflag_hook_detour.hook();
 
 			static PLH::NatDetour rtlqpc_detour = PLH::NatDetour(
 				(uintptr_t)GetProcAddress(GetModuleHandleA("ntdll.dll"), "RtlQueryPerformanceCounter"),

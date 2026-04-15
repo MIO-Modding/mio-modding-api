@@ -69,13 +69,15 @@ void LoadMemoryAddresses() {
 	uintptr_t playerNacreBasePtrAddr = baseAddr + 0x01114AD0;
 	uintptr_t playerStaminaPtrAddr = baseAddr + 0x11119a8;
 
+	uintptr_t playerVelocityBaseAddr = plrObjAddr + ModAPI::Util::GetVariableOffset("Mio", "velocity");
 	uintptr_t menuStateAddr = baseAddr + 0x10E1C88;
 
 	uintptr_t saveArrayPtrAddr = baseAddr + 0x1116bf8;
 	uintptr_t saveArraySizeAddr = baseAddr + 0x1116bf0;
-
+	
 	uintptr_t hitEnemyFunctionAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: virtual void __cdecl AI_brain::take_damage(struct Combat_hit const &)");
 	uintptr_t giveFlagFunctionAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: struct Save_entry * __cdecl Game::loot(struct String const &,int,enum Loot_flags)");
+	uintptr_t moveByFunctionAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: void __cdecl Mio::move_by_slide(struct Vec<float,3>)");
 
 	// Store the address
 	ModAPI::Addresses::g_BaseAddr = baseAddr;
@@ -86,7 +88,7 @@ void LoadMemoryAddresses() {
 
 	ModAPI::Addresses::g_MenuStateAddr = (void*)menuStateAddr;
 
-	ModAPI::Addresses::g_MoveByMethodAddr = (void*)(baseAddr + 0x9d6270);
+	ModAPI::Addresses::g_MoveByMethodAddr = (void*)(moveByFunctionAddress);
 
 	ModAPI::Addresses::g_PlayerStaminaAddr = (void*)playerStaminaPtrAddr;
 	ModAPI::Addresses::g_GameAddr = (void*)(gameAddr);
@@ -94,13 +96,12 @@ void LoadMemoryAddresses() {
 
 	ModAPI::Pointers::g_SaveArrayPtr = (void***)saveArrayPtrAddr;
 	ModAPI::SaveData::g_SaveArraySize = (uint32_t*)saveArraySizeAddr;
-	ModAPI::Addresses::g_PlayerVelocityXAddr = (void*)(plrObjAddr + 0x478);
-	ModAPI::Addresses::g_PlayerVelocityYAddr = (void*)(plrObjAddr + 0x47C);
+	ModAPI::Addresses::g_PlayerVelocityXAddr = (void*)(playerVelocityBaseAddr);
+	ModAPI::Addresses::g_PlayerVelocityYAddr = (void*)(playerVelocityBaseAddr + 4);
 
 	ModAPI::Addresses::g_HitEnemyAddress = (void*)hitEnemyFunctionAddress;
 	ModAPI::Addresses::g_GiveFlagAddress = (void*)giveFlagFunctionAddress;
 }
-
 extern "C" __declspec(dllexport) void ModInit(char* id) {
 	//Making the printfs actually be sent to console
 	FILE* f;

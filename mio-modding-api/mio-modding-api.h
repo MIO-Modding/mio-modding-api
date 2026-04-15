@@ -128,7 +128,7 @@ namespace ModAPI {
 		extern void* g_HitEnemyAddress;		///< Address of the game's internal hit enemy function.
 		extern void* g_MenuStateAddr;		///< Direct address of the current menu state value.
 		extern void* g_GiveFlagAddress;		///< Address of the game's internal give flag function.
-		extern void* g_GameAddr;
+		extern void* g_GameAddr;            ///< Address of the game's internal Game object
 	} // namespace Addresses
 
 	/**
@@ -252,10 +252,9 @@ namespace ModAPI {
 
 			/**
 			 * @brief Moves the player by the given vector using the game's internal move method.
-			 * @param vector The X and Y offsets to apply.
-			 * @return The game's internal return value from the move method.
+			 * @param vector The X, Y and Z offsets to apply.
 			 */
-			MODDING_API int64_t MovePlayer(Vector2 vector);
+			MODDING_API void MovePlayer(Vector3 vector);
 		}
 	} // namespace Player
 

@@ -8,7 +8,7 @@
 
 namespace fs = std::filesystem;
 
-uintptr_t GetDataSectionHeader() {
+uintptr_t GetSectionHeader(const char* sectionName) {
 	HMODULE hModule = GetModuleHandle(NULL);
 	if(!hModule)
 		return 0;
@@ -20,7 +20,7 @@ uintptr_t GetDataSectionHeader() {
 	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(ntHeaders);
 
 	for(WORD i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++, section++) {
-		if(strncmp(reinterpret_cast<const char*>(section->Name), ".data", 8) == 0) {
+		if(strncmp(reinterpret_cast<const char*>(section->Name), sectionName, 8) == 0) {
 			void* actualAddress = (PBYTE)section->VirtualAddress;
 			return (uintptr_t)actualAddress;
 		}
@@ -122,14 +122,15 @@ namespace ModAPI {
                 return (void*)((uintptr_t)ptr + offset);
 			}
 			MODDING_API uintptr_t GetMethodOffset(const char* method) {
+				uintptr_t textHeader = GetSectionHeader(".text");
 				fs::path modJsonPath = GetFolderPathForMod("mio-modding-api") / fs::path("methods.json");
 				std::ifstream file(modJsonPath);
 				nlohmann::json data = nlohmann::json::parse(file);
 				file.close();
-				return (uintptr_t)data[method].get<uint64_t>();
+				return textHeader+(uintptr_t) data[method].get<uint64_t>();
 			}
 			MODDING_API uintptr_t GetStaticVariableOffset(const char* variable) {
-				uintptr_t dataHeader = GetDataSectionHeader();
+				uintptr_t dataHeader = GetSectionHeader(".data");
 				fs::path modJsonPath = GetFolderPathForMod("mio-modding-api") / fs::path("variables.json");
 				std::ifstream file(modJsonPath);
 				nlohmann::json data = nlohmann::json::parse(file);

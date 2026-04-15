@@ -160,13 +160,8 @@ namespace ModAPI {
 
                 return success;
             }
-            MODDING_API int64_t MovePlayer(Vector2 vector) {
-                //I am still unsure what this array is for lol
-                float array[0x4];
-                int64_t vec = vector.CreateXYInt64();
-                //Im also unsure what the return even is meant to be so im just passing it through
-                int64_t ret = ModAPI::Util::CallAssembly<int64_t>(ModAPI::Addresses::g_MoveByMethodAddr, ModAPI::Addresses::g_PlayerObjAddr, &vec, array);
-                return ret;
+            MODDING_API void MovePlayer(Vector3 vector) {
+                ModAPI::Util::CallAssembly<void>(ModAPI::Addresses::g_MoveByMethodAddr, ModAPI::Addresses::g_PlayerObjAddr, &vector);
             }
         }
     }

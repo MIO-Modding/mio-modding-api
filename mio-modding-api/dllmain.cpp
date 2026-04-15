@@ -14,6 +14,7 @@ namespace ModAPI {
 		void* g_MenuStateAddr = nullptr;
 		void* g_MoveByMethodAddr = nullptr;
 		void* g_PlayerObjAddr = nullptr;
+		void* g_GameAddr = nullptr;
 		void* g_HitEnemyAddress = nullptr;
 		void* g_GiveFlagAddress = nullptr;
 	}
@@ -59,7 +60,8 @@ void LoadMemoryAddresses() {
 	// Get the base address of mio.exe
 	uintptr_t baseAddr = (uintptr_t)hModule;
 
-	uintptr_t plrObjAddr = (baseAddr + 0x10efc50);
+	uintptr_t gameAddr = baseAddr + ModAPI::Util::GetStaticVariableOffset("game");
+	uintptr_t plrObjAddr = gameAddr + ModAPI::Util::GetVariableOffset("Game", "mio");
 
 	// Add the offset from Cheat Engine
 	uintptr_t playerLocationBasePtrAddr = plrObjAddr + 0x2F8;
@@ -72,8 +74,8 @@ void LoadMemoryAddresses() {
 	uintptr_t saveArrayPtrAddr = baseAddr + 0x1116bf8;
 	uintptr_t saveArraySizeAddr = baseAddr + 0x1116bf0;
 
-	uintptr_t hitEnemyFunctionAddress = baseAddr + 0x75ed70;
-	uintptr_t giveFlagFunctionAddress = baseAddr + 0x060ee40;
+	uintptr_t hitEnemyFunctionAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: virtual void __cdecl AI_brain::take_damage(struct Combat_hit const &)");
+	uintptr_t giveFlagFunctionAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: struct Save_entry * __cdecl Game::loot(struct String const &,int,enum Loot_flags)");
 
 	// Store the address
 	ModAPI::Addresses::g_BaseAddr = baseAddr;
@@ -87,7 +89,8 @@ void LoadMemoryAddresses() {
 	ModAPI::Addresses::g_MoveByMethodAddr = (void*)(baseAddr + 0x9d6270);
 
 	ModAPI::Addresses::g_PlayerStaminaAddr = (void*)playerStaminaPtrAddr;
-	ModAPI::Addresses::g_PlayerObjAddr = (void*)(baseAddr + 0x10efc50);
+	ModAPI::Addresses::g_GameAddr = (void*)(gameAddr);
+	ModAPI::Addresses::g_PlayerObjAddr = (void*)(plrObjAddr);
 
 	ModAPI::Pointers::g_SaveArrayPtr = (void***)saveArrayPtrAddr;
 	ModAPI::SaveData::g_SaveArraySize = (uint32_t*)saveArraySizeAddr;

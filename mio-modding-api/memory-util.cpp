@@ -1,6 +1,32 @@
 #include "Windows.h"
 #include <psapi.h>
 #include "mio-modding-api.h"
+#include <nlohmann/json.hpp>
+#include <filesystem>
+#include <iostream>
+#include <fstream>
+
+namespace fs = std::filesystem;
+
+uintptr_t GetDataSectionHeader() {
+	HMODULE hModule = GetModuleHandle(NULL);
+	if(!hModule)
+		return 0;
+	auto baseAddress = reinterpret_cast<PBYTE>(hModule);
+	auto dosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(baseAddress);
+	if(dosHeader->e_magic != IMAGE_DOS_SIGNATURE)
+		return 0;
+	auto ntHeaders = reinterpret_cast<PIMAGE_NT_HEADERS>(baseAddress + dosHeader->e_lfanew);
+	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(ntHeaders);
+
+	for(WORD i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++, section++) {
+		if(strncmp(reinterpret_cast<const char*>(section->Name), ".data", 8) == 0) {
+			void* actualAddress = (PBYTE)section->VirtualAddress;
+			return (uintptr_t)actualAddress;
+		}
+	}
+	return 0;
+}
 
 namespace ModAPI {
     namespace Util {
@@ -94,7 +120,30 @@ namespace ModAPI {
                     return nullptr;
 
                 return (void*)((uintptr_t)ptr + offset);
-            }
+			}
+			MODDING_API uintptr_t GetMethodOffset(const char* method) {
+				fs::path modJsonPath = GetFolderPathForMod("mio-modding-api") / fs::path("methods.json");
+				std::ifstream file(modJsonPath);
+				nlohmann::json data = nlohmann::json::parse(file);
+				file.close();
+				return (uintptr_t)data[method].get<uint64_t>();
+			}
+			MODDING_API uintptr_t GetStaticVariableOffset(const char* variable) {
+				uintptr_t dataHeader = GetDataSectionHeader();
+				fs::path modJsonPath = GetFolderPathForMod("mio-modding-api") / fs::path("variables.json");
+				std::ifstream file(modJsonPath);
+				nlohmann::json data = nlohmann::json::parse(file);
+				file.close();
+				return dataHeader+(uintptr_t)data[variable].get<uint64_t>();
+			}
+			MODDING_API uintptr_t GetVariableOffset(const char* structure, const char* variable) {
+				fs::path modJsonPath = GetFolderPathForMod("mio-modding-api") / fs::path("structs.json");
+				std::ifstream file(modJsonPath);
+				nlohmann::json data = nlohmann::json::parse(file);
+				file.close();
+				nlohmann::json variables = data[structure].get<nlohmann::json>();
+				return (uintptr_t)variables[variable].get<uint64_t>();
+			}
         }
     }
 }

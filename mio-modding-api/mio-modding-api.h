@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <filesystem>
 
 #ifdef MODDING_API_EXPORTS
 #define MODDING_API __declspec(dllexport)
@@ -127,6 +128,7 @@ namespace ModAPI {
 		extern void* g_HitEnemyAddress;		///< Address of the game's internal hit enemy function.
 		extern void* g_MenuStateAddr;		///< Direct address of the current menu state value.
 		extern void* g_GiveFlagAddress;		///< Address of the game's internal give flag function.
+		extern void* g_GameAddr;
 	} // namespace Addresses
 
 	/**
@@ -486,6 +488,33 @@ namespace ModAPI {
 			 * @note This is a blocking call. Do not call this on the main thread.
 			 */
 			MODDING_API void WaitForSaveLoaded();
+
+			/**
+			 * @brief Loads a method offset from the methods.json
+			 * @param Key of method
+			 * @return Offset of the method
+			 */
+			MODDING_API uintptr_t GetMethodOffset(const char* method);
+			/**
+			 * @brief Loads a static variable offset from the variable.json
+			 * @param Key of variable
+			 * @return Offset of the static variable
+			 */
+			MODDING_API uintptr_t GetStaticVariableOffset(const char* variable);
+			/**
+			 * @brief Loads a variable offset in a struct from the structs.json
+			 * @param Struct to get offset from
+			 * @param Variable in struct
+			 * @return Offset of the variable
+			 */
+			MODDING_API uintptr_t GetVariableOffset(const char* structure, const char* variable);
+
+			/**
+			 * @brief Gets the path to a mods folder
+			 * @param Mod to get path to
+			 * @return The path of the mods folder
+			 */
+			MODDING_API std::filesystem::path GetFolderPathForMod(const char* mod);
 		}
 
 		/**

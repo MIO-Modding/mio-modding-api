@@ -104,7 +104,7 @@ extern "C" __declspec(dllexport) void ModInit(char* id) {
 	LogMessage("Loaded Flamby Data");
 
 	//Warning: This file exists on my pc not in the repo
-	ModifyGin("flamby/assets.gin", "texture_42", "decomp/156597_texture_42.dds");
+	ModifyGin("flamby/misc_files.gin", "assets/loca/lockit_other.csv", "decomp/000_assetslocalockit_other.csv");
 
 	PatchChecksum();
 

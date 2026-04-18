@@ -129,6 +129,8 @@ namespace ModAPI {
 		extern void* g_GiveFlagAddress;		///< Address of the game's internal give flag function.
 		extern void* g_EnableDebugAddress;	///< Address of the game's enable debug method.
 		extern void* g_EnableGUIAddress;	///< Address of the game's enable GUI method.
+		extern void* g_DisableDebugAddress;	///< Address of the game's disable debug method.
+		extern void* g_DisableGUIAddress;	///< Address of the game's disable GUI method.
 	} // namespace Addresses
 
 	/**
@@ -386,6 +388,23 @@ namespace ModAPI {
 	 */
 	namespace Util {
 		extern "C" {
+			/**
+			 * @brief Enables the in-game debug mode.
+			 * @note This only sets the session to debug mode, but does not open the interactive debug UI. To do so, use EnableDebugUI.
+			 */
+			MODDING_API void EnableDebug();
+
+			/**
+			 * @brief Enables the in-game debug mode.
+			 * @warning Automatically turns the session into a debug session - this can currently only be reverted by restarting the game!
+			*/
+			MODDING_API void EnableDebugUI();
+
+			/**
+			 * @brief Disables the in-game debug mode.
+			 */
+			MODDING_API void DisableDebugUI();
+
 			/**
 			 * @brief Writes raw bytes to an arbitrary memory address.
 			 * @param address Target memory address.

@@ -18,7 +18,6 @@ namespace ModAPI {
 		void* g_GiveFlagAddress = nullptr;
 		void* g_EnableDebugAddress = nullptr;
 		void* g_EnableGUIAddress = nullptr;
-		void* g_DisableDebugAddress = nullptr;
 		void* g_DisableGUIAddress = nullptr;
 	}
 

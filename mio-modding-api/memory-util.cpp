@@ -143,7 +143,7 @@ namespace ModAPI {
 				nlohmann::json data = nlohmann::json::parse(file);
 				file.close();
 				nlohmann::json variables = data[structure].get<nlohmann::json>();
-				return (uintptr_t)variables[variable].get<uint64_t>();
+				return (uintptr_t)variables[variable].get<nlohmann::json>()["offset"].get<uint64_t>();
 			}
         }
     }

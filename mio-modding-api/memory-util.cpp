@@ -5,41 +5,23 @@
 #include <filesystem>
 #include <iostream>
 #include <fstream>
+#include "saved-addresses.h"
 
 namespace fs = std::filesystem;
 
-uintptr_t GetSectionHeader(const char* sectionName) {
-	HMODULE hModule = GetModuleHandle(NULL);
-	if(!hModule)
-		return 0;
-	auto baseAddress = reinterpret_cast<PBYTE>(hModule);
-	auto dosHeader = reinterpret_cast<PIMAGE_DOS_HEADER>(baseAddress);
-	if(dosHeader->e_magic != IMAGE_DOS_SIGNATURE)
-		return 0;
-	auto ntHeaders = reinterpret_cast<PIMAGE_NT_HEADERS>(baseAddress + dosHeader->e_lfanew);
-	PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(ntHeaders);
-
-	for(WORD i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++, section++) {
-		if(strncmp(reinterpret_cast<const char*>(section->Name), sectionName, 8) == 0) {
-			void* actualAddress = (PBYTE)section->VirtualAddress;
-			return (uintptr_t)actualAddress;
-		}
-	}
-	return 0;
-}
 
 namespace ModAPI {
     namespace Util {
-        extern "C" {
-            MODDING_API bool WriteMemory(void* address, const void* data, size_t size) {
-                DWORD oldProtect;
-                if (!VirtualProtect(address, size, PAGE_EXECUTE_READWRITE, &oldProtect)) {
-                    return false;
-                }
-                memcpy(address, data, size);
-                VirtualProtect(address, size, oldProtect, &oldProtect);
-                return true;
-            }
+		extern "C" {
+			MODDING_API bool WriteMemory(void* address, const void* data, size_t size) {
+				DWORD oldProtect;
+				if(!VirtualProtect(address, size, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+					return false;
+				}
+				memcpy(address, data, size);
+				VirtualProtect(address, size, oldProtect, &oldProtect);
+				return true;
+			}
 
             MODDING_API bool ReadMemory(void* address, void* buffer, size_t size) {
                 DWORD oldProtect;
@@ -122,28 +104,13 @@ namespace ModAPI {
                 return (void*)((uintptr_t)ptr + offset);
 			}
 			MODDING_API uintptr_t GetMethodOffset(const char* method) {
-				uintptr_t textHeader = GetSectionHeader(".text");
-				fs::path modJsonPath = GetFolderPathForMod("mio-modding-api") / fs::path("methods.json");
-				std::ifstream file(modJsonPath);
-				nlohmann::json data = nlohmann::json::parse(file);
-				file.close();
-				return textHeader+(uintptr_t) data[method].get<uint64_t>();
+				return Internal::methods[std::string(method)];
 			}
 			MODDING_API uintptr_t GetStaticVariableOffset(const char* variable) {
-				uintptr_t dataHeader = GetSectionHeader(".data");
-				fs::path modJsonPath = GetFolderPathForMod("mio-modding-api") / fs::path("variables.json");
-				std::ifstream file(modJsonPath);
-				nlohmann::json data = nlohmann::json::parse(file);
-				file.close();
-				return dataHeader+(uintptr_t)data[variable].get<uint64_t>();
+				return Internal::staticVariables[std::string(variable)];
 			}
 			MODDING_API uintptr_t GetVariableOffset(const char* structure, const char* variable) {
-				fs::path modJsonPath = GetFolderPathForMod("mio-modding-api") / fs::path("structs.json");
-				std::ifstream file(modJsonPath);
-				nlohmann::json data = nlohmann::json::parse(file);
-				file.close();
-				nlohmann::json variables = data[structure].get<nlohmann::json>();
-				return (uintptr_t)variables[variable].get<nlohmann::json>()["offset"].get<uint64_t>();
+				return Internal::structs[std::string(structure)][std::string(variable)];
 			}
         }
     }

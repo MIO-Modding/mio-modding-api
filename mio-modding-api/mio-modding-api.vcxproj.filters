@@ -18,6 +18,9 @@
     <ClInclude Include="mio-modding-api.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="saved-addresses.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -36,6 +39,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="general-util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="saved-addresses.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

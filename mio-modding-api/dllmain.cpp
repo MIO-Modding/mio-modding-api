@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "mio-modding-api.h"
 #include <string>
+#include "saved-addresses.h"
 
 namespace ModAPI {
 	// Constant addresses
@@ -45,6 +46,8 @@ void LoadMemoryAddresses() {
 		return;
 	}
 
+	Internal::ReloadSavedAddresses();
+
 	// Get the base address of mio.exe
 	uintptr_t baseAddr = (uintptr_t)hModule;
 
@@ -62,7 +65,7 @@ void LoadMemoryAddresses() {
 
 	uintptr_t playerVelocityBaseAddr = plrObjAddr + ModAPI::Util::GetVariableOffset("Mio", "velocity");
 	uintptr_t menuStateAddr = metagameAddr + ModAPI::Util::GetVariableOffset("Metagame", "state");
-	
+
 	uintptr_t hitEnemyFunctionAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: virtual void __cdecl AI_brain::take_damage(struct Combat_hit const &)");
 	uintptr_t giveFlagFunctionAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: struct Save_entry * __cdecl Game::loot(struct String const &,int,enum Loot_flags)");
 	uintptr_t moveByFunctionAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: void __cdecl Mio::move_by_slide(struct Vec<float,3>)");

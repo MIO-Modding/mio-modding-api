@@ -104,7 +104,12 @@ namespace ModAPI {
                 return (void*)((uintptr_t)ptr + offset);
 			}
 			MODDING_API uintptr_t GetMethodOffset(const char* method) {
-				return Internal::methods[std::string(method)];
+				MethodAddress addr = Internal::methods[std::string(method)];
+				return addr.addr;
+			}
+			MODDING_API size_t GetMethodSize(const char* method) {
+				MethodAddress addr = Internal::methods[std::string(method)];
+				return addr.size;
 			}
 			MODDING_API uintptr_t GetStaticVariableOffset(const char* variable) {
 				return Internal::staticVariables[std::string(variable)];

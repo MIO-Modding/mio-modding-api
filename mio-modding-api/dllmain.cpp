@@ -8,24 +8,24 @@
 namespace ModAPI {
 	// Constant addresses
 	namespace Addresses {
-		uintptr_t g_BaseAddr;
-		void* g_PlayerStaminaAddr = nullptr;
-		void* g_PlayerVelocityAddr = nullptr;
-		void* g_MenuStateAddr = nullptr;
-		void* g_MoveByMethodAddr = nullptr;
-		void* g_PlayerObjAddr = nullptr;
-		void* g_GameAddr = nullptr;
-		void* g_HitEnemyAddress = nullptr;
-		void* g_GiveFlagAddress = nullptr;
-		void* g_PlayerLocationAddr = nullptr;
-		void* g_GetSaveEntryAddress = nullptr;
-		void* g_SaveAddress = nullptr;
-		void* g_PlayerHealthAddress = nullptr;
+		MODDING_API uintptr_t g_BaseAddr;
+		MODDING_API void* g_PlayerStaminaAddr = nullptr;
+		MODDING_API void* g_PlayerVelocityAddr = nullptr;
+		MODDING_API void* g_MenuStateAddr = nullptr;
+		MODDING_API void* g_MoveByMethodAddr = nullptr;
+		MODDING_API void* g_PlayerObjAddr = nullptr;
+		MODDING_API void* g_GameAddr = nullptr;
+		MODDING_API void* g_HitEnemyAddress = nullptr;
+		MODDING_API void* g_GiveFlagAddress = nullptr;
+		MODDING_API void* g_PlayerLocationAddr = nullptr;
+		MODDING_API void* g_GetSaveEntryAddress = nullptr;
+		MODDING_API void* g_SaveAddress = nullptr;
+		MODDING_API void* g_PlayerHealthAddress = nullptr;
 	}
 
 	// Base address for pointer chain
 	namespace Pointers {
-		void** g_PlayerNodeBasePtr = nullptr;
+		MODDING_API void** g_PlayerNodeBasePtr = nullptr;
 	}
 
 	namespace Util {

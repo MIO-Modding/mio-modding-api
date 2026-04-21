@@ -5,13 +5,14 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <psapi.h>
+#include "saved-addresses.h"
 
 using namespace ModAPI::Util;
 namespace fs = std::filesystem;
 
 namespace Internal {
 	std::unordered_map<std::string, uintptr_t> staticVariables;
-	std::unordered_map<std::string, uintptr_t> methods;
+	std::unordered_map<std::string, MethodAddress> methods;
 	std::unordered_map<std::string, std::unordered_map<std::string, uintptr_t>> structs;
 
 	uintptr_t GetSectionHeader(const char* sectionName) {
@@ -47,7 +48,8 @@ namespace Internal {
 		nlohmann::json data = nlohmann::json::parse(file);
 		file.close();
 		for(const auto& item : data.items()) {
-			methods[item.key()] = textHeader+(uintptr_t) item.value().get<uint64_t>();
+			nlohmann::json data2 = item.value().get<nlohmann::json>();
+			methods[item.key()] = MethodAddress(textHeader + (uintptr_t)data2["address"].get<uint64_t>(), (size_t)data2["address"].get<uint64_t>());
 		}
 
 		file = std::ifstream(variablesPath);

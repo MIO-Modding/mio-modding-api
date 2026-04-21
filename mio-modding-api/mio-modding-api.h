@@ -61,7 +61,7 @@ namespace ModAPI {
 	 * instead of accessing these directly.
 	 */
 	namespace Pointers {
-		extern void** g_PlayerNodeBasePtr;	   ///< Base pointer for the player's node pointer chain.
+		extern MODDING_API void** g_PlayerNodeBasePtr; ///< Base pointer for the player's node pointer chain.
 	} // namespace Pointers
 
 	/**
@@ -72,20 +72,20 @@ namespace ModAPI {
 	 * instead of accessing these directly.
 	 */
 	namespace Addresses {
-		extern uintptr_t g_BaseAddr;		///< Base Address for the mio.exe.
+		extern MODDING_API uintptr_t g_BaseAddr;		///< Base Address for the mio.exe.
 
-		extern void* g_PlayerStaminaAddr;	///< Direct address of the player's stamina value.
-		extern void* g_PlayerVelocityAddr;	///< Direct address of the player's velocity value, offset from the player object.
-		extern void* g_PlayerLocationAddr;  ///< Direct address of the player's location.
-		extern void* g_MoveByMethodAddr;	///< Address of the game's internal move by method function.
-		extern void* g_PlayerObjAddr;		///< Direct address of the player object.
-		extern void* g_HitEnemyAddress;		///< Address of the game's internal hit enemy function.
-		extern void* g_MenuStateAddr;		///< Direct address of the current menu state value.
-		extern void* g_GiveFlagAddress;		///< Address of the game's internal give flag function.
-		extern void* g_GameAddr;            ///< Address of the game's internal Game object
-		extern void* g_GetSaveEntryAddress; ///< Address of the game's internal function for getting a save entry
-		extern void* g_SaveAddress;			///< Address of the current save file
-		extern void* g_PlayerHealthAddress;	///< Address of the players health
+		extern MODDING_API void* g_PlayerStaminaAddr; ///< Direct address of the player's stamina value.
+		extern MODDING_API void* g_PlayerVelocityAddr; ///< Direct address of the player's velocity value, offset from the player object.
+		extern MODDING_API void* g_PlayerLocationAddr; ///< Direct address of the player's location.
+		extern MODDING_API void* g_MoveByMethodAddr;   ///< Address of the game's internal move by method function.
+		extern MODDING_API void* g_PlayerObjAddr;	   ///< Direct address of the player object.
+		extern MODDING_API void* g_HitEnemyAddress;	   ///< Address of the game's internal hit enemy function.
+		extern MODDING_API void* g_MenuStateAddr;	   ///< Direct address of the current menu state value.
+		extern MODDING_API void* g_GiveFlagAddress;	   ///< Address of the game's internal give flag function.
+		extern MODDING_API void* g_GameAddr;		   ///< Address of the game's internal Game object
+		extern MODDING_API void* g_GetSaveEntryAddress; ///< Address of the game's internal function for getting a save entry
+		extern MODDING_API void* g_SaveAddress;			///< Address of the current save file
+		extern MODDING_API void* g_PlayerHealthAddress; ///< Address of the players health
 	} // namespace Addresses
 
 	/**
@@ -408,6 +408,12 @@ namespace ModAPI {
 			 * @return Offset of the method
 			 */
 			MODDING_API uintptr_t GetMethodOffset(const char* method);
+			/**
+			 * @brief Loads a method size from the methods.json
+			 * @param Key of method
+			 * @return Size of the method
+			 */
+			MODDING_API size_t GetMethodSize(const char* method);
 			/**
 			 * @brief Loads a static variable offset from the variable.json
 			 * @param Key of variable

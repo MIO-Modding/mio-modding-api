@@ -28,6 +28,30 @@ namespace ModAPI {
 				hitenemy_hooks.push_back(callback);
 			}
 		}
+
+		namespace Init {
+			// Functions hooked to OnHitEnemy
+			std::vector<std::function<void(uintptr_t)>> register_fighter_hooks;
+
+			uintptr_t register_fighter_trampoline = NULL;
+
+			NOINLINE void __cdecl ResolveOnRegisterFighterHook(uintptr_t fighter_info) {
+				// Run all functions connected to this event
+				for(int i = 0; i < register_fighter_hooks.size(); i++) {
+					register_fighter_hooks[i](fighter_info);
+				}
+				// Run the original Enemy Hit function (at the address provided in enemyhit_trampoline)
+				typedef int func(uintptr_t);
+				func* trampoline = (func*)(register_fighter_trampoline);
+				int i = trampoline(fighter_info);
+			}
+
+			// Enter a function to call it when an enemy is hit. Parameters are the addresses of enemy data and hit data.
+			MODDING_API void RunOnRegisterFighter(std::function<void(uintptr_t)> callback) {
+				register_fighter_hooks.push_back(callback);
+			}
+		} // namespace Combat
+
 		namespace Flags {
 			// Functions hooked to OnHitEnemy
 			std::vector<std::function<void(uintptr_t, ModAPI::SaveData::GameString*, int32_t*)>> giveflag_hooks;
@@ -99,12 +123,14 @@ namespace ModAPI {
 			MODDING_API void RunOnTick(std::function<void(float)> callback) {
 				ontick_hooks.push_back(callback);
 			}
-		}
+		} // namespace Time
 
 		// Initialize and connect hooks
 		MODDING_API void InitializeHooks() {
 			static PLH::NatDetour enemyhit_hook_detour = PLH::NatDetour((uintptr_t)ModAPI::Addresses::g_HitEnemyAddress, (uintptr_t)Combat::ResolveOnHitEnemyHook, &Combat::hitenemy_trampoline);
 			enemyhit_hook_detour.hook();
+			static PLH::NatDetour register_fighter_detour = PLH::NatDetour((uintptr_t)ModAPI::Addresses::g_RegisterFighterAddress, (uintptr_t)Init::ResolveOnRegisterFighterHook, &Init::register_fighter_trampoline);
+			register_fighter_detour.hook();
 			static PLH::NatDetour giveflag_hook_detour = PLH::NatDetour((uintptr_t)ModAPI::Addresses::g_GiveFlagAddress, (uintptr_t)Flags::ResolveOnGiveFlag, &Flags::giveflag_trampoline);
 			giveflag_hook_detour.hook();
 

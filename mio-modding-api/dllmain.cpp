@@ -15,7 +15,11 @@ namespace ModAPI {
 		void* g_MoveByMethodAddr = nullptr;
 		void* g_PlayerObjAddr = nullptr;
 		void* g_HitEnemyAddress = nullptr;
+		void* g_RegisterFighterAddress = nullptr;
 		void* g_GiveFlagAddress = nullptr;
+		void* g_EnableDebugAddress = nullptr;
+		void* g_EnableGUIAddress = nullptr;
+		void* g_DisableGUIAddress = nullptr;
 	}
 
 	// Base address for pointer chain
@@ -73,7 +77,12 @@ void LoadMemoryAddresses() {
 	uintptr_t saveArraySizeAddr = baseAddr + 0x1116bf0;
 
 	uintptr_t hitEnemyFunctionAddress = baseAddr + 0x75ed70;
+	uintptr_t registerFighterFunctionAddress = baseAddr + 0x7627d0;
 	uintptr_t giveFlagFunctionAddress = baseAddr + 0x060ee40;
+
+	uintptr_t enableDebugAddress = baseAddr + 0x597860;
+	uintptr_t enableGUIAddress = baseAddr + 0x45b5e0;
+	uintptr_t disableGUIAddress = baseAddr + 0x45b5d0;
 
 	// Store the address
 	ModAPI::Addresses::g_BaseAddr = baseAddr;
@@ -94,8 +103,13 @@ void LoadMemoryAddresses() {
 	ModAPI::Addresses::g_PlayerVelocityXAddr = (void*)(plrObjAddr + 0x478);
 	ModAPI::Addresses::g_PlayerVelocityYAddr = (void*)(plrObjAddr + 0x47C);
 
+	ModAPI::Addresses::g_RegisterFighterAddress = (void*)registerFighterFunctionAddress;
 	ModAPI::Addresses::g_HitEnemyAddress = (void*)hitEnemyFunctionAddress;
 	ModAPI::Addresses::g_GiveFlagAddress = (void*)giveFlagFunctionAddress;
+
+	ModAPI::Addresses::g_EnableDebugAddress = (void*)enableDebugAddress;
+	ModAPI::Addresses::g_EnableGUIAddress = (void*)enableGUIAddress;
+	ModAPI::Addresses::g_DisableGUIAddress = (void*)disableGUIAddress;
 }
 
 extern "C" __declspec(dllexport) void ModInit(char* id) {

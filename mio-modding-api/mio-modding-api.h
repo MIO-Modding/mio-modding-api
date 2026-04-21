@@ -117,19 +117,20 @@ namespace ModAPI {
 	 * instead of accessing these directly.
 	 */
 	namespace Addresses {
-		extern uintptr_t g_BaseAddr;		///< Base Address for the mio.exe.
+		extern uintptr_t g_BaseAddr;			///< Base Address for the mio.exe.
 
-		extern void* g_PlayerStaminaAddr;	///< Direct address of the player's stamina value.
-		extern void* g_PlayerVelocityXAddr; ///< Direct address of the player's X velocity value, offset from the player object.
-		extern void* g_PlayerVelocityYAddr; ///< Direct address of the player's Y velocity value, offset from the player object.
-		extern void* g_MoveByMethodAddr;	///< Address of the game's internal move by method function.
-		extern void* g_PlayerObjAddr;		///< Direct address of the player object.
-		extern void* g_HitEnemyAddress;		///< Address of the game's internal hit enemy function.
-		extern void* g_MenuStateAddr;		///< Direct address of the current menu state value.
-		extern void* g_GiveFlagAddress;		///< Address of the game's internal give flag function.
-		extern void* g_EnableDebugAddress;	///< Address of the game's enable debug method.
-		extern void* g_EnableGUIAddress;	///< Address of the game's enable GUI method.
-		extern void* g_DisableGUIAddress;	///< Address of the game's disable GUI method.
+		extern void* g_PlayerStaminaAddr;		///< Direct address of the player's stamina value.
+		extern void* g_PlayerVelocityXAddr;		///< Direct address of the player's X velocity value, offset from the player object.
+		extern void* g_PlayerVelocityYAddr;		///< Direct address of the player's Y velocity value, offset from the player object.
+		extern void* g_MoveByMethodAddr;		///< Address of the game's internal move by method function.
+		extern void* g_PlayerObjAddr;			///< Direct address of the player object.
+		extern void* g_RegisterFighterAddress;	///< Address of the game's internal method registering an AI_Brain as a fighter.
+		extern void* g_HitEnemyAddress;			///< Address of the game's internal hit enemy function.
+		extern void* g_MenuStateAddr;			///< Direct address of the current menu state value.
+		extern void* g_GiveFlagAddress;			///< Address of the game's internal give flag function.
+		extern void* g_EnableDebugAddress;		///< Address of the game's enable debug method.
+		extern void* g_EnableGUIAddress;		///< Address of the game's enable GUI method.
+		extern void* g_DisableGUIAddress;		///< Address of the game's disable GUI method.
 	} // namespace Addresses
 
 	/**
@@ -570,6 +571,21 @@ namespace ModAPI {
 			 *                 - The enemy object pointer (uintptr_t)
 			 */
 			MODDING_API void RunOnHitEnemy(std::function<void(uintptr_t, uintptr_t)> callback);
+		} // namespace Combat
+
+		/**
+		 * @brief Hooks related to initialization.
+		 */
+		namespace Init {
+			/**
+			 * @brief Registers a callback to be invoked whenever an AI_Brain is registered as a fighter.
+			 *
+			 * Multiple callbacks can be registered and all will fire on each registration.
+			 *
+			 * @param callback Function to call on enemy hit. Receives one argument:
+			 *                 - The AI_Brain object pointer (uintptr_t)
+			 */
+			MODDING_API void RunOnRegisterFighter(std::function<void(uintptr_t)> callback);
 		} // namespace Combat
 
 		/**

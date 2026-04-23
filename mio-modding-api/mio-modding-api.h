@@ -84,8 +84,9 @@ namespace ModAPI {
 		extern MODDING_API void* g_GiveFlagAddress;	   ///< Address of the game's internal give flag function.
 		extern MODDING_API void* g_GameAddr;		   ///< Address of the game's internal Game object
 		extern MODDING_API void* g_GetSaveEntryAddress; ///< Address of the game's internal function for getting a save entry
-		extern MODDING_API void* g_SaveAddress;			///< Address of the current save file
+		extern MODDING_API void* g_SaveEntriesAddress;	///< Address of the current save file
 		extern MODDING_API void* g_PlayerHealthAddress; ///< Address of the players health
+		extern MODDING_API void* g_RemoveSaveEntryAddress; ///< Address of the game's internal function for removing a save entry
 	} // namespace Addresses
 
 	/**
@@ -217,6 +218,7 @@ namespace ModAPI {
 				this->data = data;
 				size = strlen(data);
 			}
+			GameString() {}
 		} GameString;
 		static_assert(sizeof(GameString) == 16, "GameString size mismatch — struct layout may be wrong");
 
@@ -228,6 +230,7 @@ namespace ModAPI {
 			uint32_t flags;	 ///< Flags associated with this entry.
 			int32_t count;	 ///< The count/amount of this entry.
 			BYTE unused[56]; ///< Padding - do not use.
+			SaveEntryValue() {}
 		} SaveEntryValue;
 		static_assert(sizeof(SaveEntryValue) == 64, "SaveEntryValue size mismatch — struct layout may be wrong");
 
@@ -242,6 +245,7 @@ namespace ModAPI {
 			uint32_t padding;	   ///< Alignment padding - do not use.
 			GameString entry_name; ///< The key/name of this save entry.
 			SaveEntryValue value;  ///< The value payload of this entry.
+			SaveEntry() {}
 		} SaveEntry;
 		static_assert(sizeof(SaveEntry) == 88, "SaveEntry size mismatch — struct layout may be wrong");
 
@@ -251,7 +255,14 @@ namespace ModAPI {
 			 * @param name The key/name of the the entry to find.
 			 * @return Pointer to the SaveEntry, or nullptr if not found.
 			 */
-			MODDING_API SaveEntry* GetSaveEntry(const char* name);
+			MODDING_API SaveEntryValue* GetSaveEntry(const char* name);
+
+			/**
+			 * @brief Removes a save entry by its key/name.
+			 * @param name The key/name of the the entry to remove.
+			 * @return If the removal was successful.
+			 */
+			MODDING_API bool RemoveSaveEntry(const char* name);
 
 			/**
 			 * @brief Gets the count value of a save entry.

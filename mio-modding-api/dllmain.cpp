@@ -19,8 +19,9 @@ namespace ModAPI {
 		MODDING_API void* g_GiveFlagAddress = nullptr;
 		MODDING_API void* g_PlayerLocationAddr = nullptr;
 		MODDING_API void* g_GetSaveEntryAddress = nullptr;
-		MODDING_API void* g_SaveAddress = nullptr;
+		MODDING_API void* g_SaveEntriesAddress = nullptr;
 		MODDING_API void* g_PlayerHealthAddress = nullptr;
+		MODDING_API void* g_RemoveSaveEntryAddress = nullptr;
 	}
 
 	// Base address for pointer chain
@@ -54,7 +55,7 @@ void LoadMemoryAddresses() {
 	uintptr_t gameAddr = baseAddr + ModAPI::Util::GetStaticVariableOffset("game");
 	uintptr_t metagameAddr = baseAddr + ModAPI::Util::GetStaticVariableOffset("metagame");
 	uintptr_t plrObjAddr = gameAddr + ModAPI::Util::GetVariableOffset("Game", "mio");
-	uintptr_t saveAddr = gameAddr + ModAPI::Util::GetVariableOffset("Game", "save");
+	uintptr_t saveEntriesAddr = gameAddr + ModAPI::Util::GetVariableOffset("Game", "save") + ModAPI::Util::GetVariableOffset("Save", "entries");
 
 	// Add the offset from Cheat Engine
 	uintptr_t playerNodeBasePtrAddr = plrObjAddr + ModAPI::Util::GetVariableOffset("Mio", "node");
@@ -69,7 +70,8 @@ void LoadMemoryAddresses() {
 	uintptr_t hitEnemyFunctionAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: virtual void __cdecl AI_brain::take_damage(struct Combat_hit const &)");
 	uintptr_t giveFlagFunctionAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: struct Save_entry * __cdecl Game::loot(struct String const &,int,enum Loot_flags)");
 	uintptr_t moveByFunctionAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: void __cdecl Mio::move_by_slide(struct Vec<float,3>)");
-	uintptr_t getSaveEntryAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: struct Save_entry * __cdecl Save::acquire(struct String const &)");
+	uintptr_t getSaveEntryAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: struct Save_entry * __cdecl Hashmap<struct String,struct Save_entry>::get_or_set__refs(struct String const &,struct Save_entry const &)");
+	uintptr_t removeSaveEntryAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: bool __cdecl Hashmap<struct String,struct Save_entry>::try_remove(struct String const &,struct Save_entry *)");
 	
 	// Store the address
 	ModAPI::Addresses::g_BaseAddr = baseAddr;
@@ -85,13 +87,14 @@ void LoadMemoryAddresses() {
 	ModAPI::Addresses::g_PlayerStaminaAddr = (void*)playerStaminaPtrAddr;
 	ModAPI::Addresses::g_GameAddr = (void*)(gameAddr);
 	ModAPI::Addresses::g_PlayerObjAddr = (void*)(plrObjAddr);
-	ModAPI::Addresses::g_SaveAddress = (void*)(saveAddr);
+	ModAPI::Addresses::g_SaveEntriesAddress = (void*)(saveEntriesAddr);
 
 	ModAPI::Addresses::g_PlayerVelocityAddr = (void*)(playerVelocityBaseAddr);
 
 	ModAPI::Addresses::g_HitEnemyAddress = (void*)hitEnemyFunctionAddress;
 	ModAPI::Addresses::g_GiveFlagAddress = (void*)giveFlagFunctionAddress;
 	ModAPI::Addresses::g_GetSaveEntryAddress = (void*)getSaveEntryAddress;
+	ModAPI::Addresses::g_RemoveSaveEntryAddress = (void*)removeSaveEntryAddress;
 }
 extern "C" __declspec(dllexport) void ModInit(char* id) {
 	//Making the printfs actually be sent to console

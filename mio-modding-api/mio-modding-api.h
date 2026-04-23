@@ -434,6 +434,13 @@ namespace ModAPI {
 			 * @return The path of the mods folder
 			 */
 			MODDING_API std::filesystem::path GetFolderPathForMod(const char* mod);
+
+			/**
+			 * @brief Gets the path to a mods config folder
+			 * @param Mod to get path to
+			 * @return The path of the mods config folder
+			 */
+			MODDING_API std::filesystem::path GetFolderPathForModConfig(const char* mod);
 		}
 
 		/**

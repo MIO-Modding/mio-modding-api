@@ -53,5 +53,8 @@ namespace ModAPI {
 		MODDING_API fs::path GetFolderPathForMod(const char* mod) {
 			return fs::path("mods") / fs::path(mod);
 		}
+		MODDING_API fs::path GetFolderPathForModConfig(const char* mod) {
+			return fs::path("modconfig") / fs::path(mod);
+		}
 	}
 }

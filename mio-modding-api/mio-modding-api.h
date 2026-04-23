@@ -87,6 +87,7 @@ namespace ModAPI {
 		extern MODDING_API void* g_SaveEntriesAddress;	///< Address of the current save file
 		extern MODDING_API void* g_PlayerHealthAddress; ///< Address of the players health
 		extern MODDING_API void* g_RemoveSaveEntryAddress; ///< Address of the game's internal function for removing a save entry
+		extern MODDING_API void* g_CurrentZoneIdAddress; ///< Address of the current zone id
 	} // namespace Addresses
 
 	/**
@@ -452,6 +453,11 @@ namespace ModAPI {
 			 * @return The path of the mods config folder
 			 */
 			MODDING_API std::filesystem::path GetFolderPathForModConfig(const char* mod);
+			/**
+			 * @brief Gets the id of the current zone
+			 * @return The id of the current zone
+			 */
+			MODDING_API char* GetCurrentZoneId();
 		}
 
 		/**

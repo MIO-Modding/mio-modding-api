@@ -56,5 +56,8 @@ namespace ModAPI {
 		MODDING_API fs::path GetFolderPathForModConfig(const char* mod) {
 			return fs::path("modconfig") / fs::path(mod);
 		}
+		MODDING_API char* GetCurrentZoneId() {
+			return ReadMemoryTyped<char*>(ModAPI::Addresses::g_CurrentZoneIdAddress);
+		}
 	}
 }

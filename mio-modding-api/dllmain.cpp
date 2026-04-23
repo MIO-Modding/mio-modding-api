@@ -22,6 +22,7 @@ namespace ModAPI {
 		MODDING_API void* g_SaveEntriesAddress = nullptr;
 		MODDING_API void* g_PlayerHealthAddress = nullptr;
 		MODDING_API void* g_RemoveSaveEntryAddress = nullptr;
+		MODDING_API void* g_CurrentZoneIdAddress = nullptr;
 	}
 
 	// Base address for pointer chain
@@ -55,6 +56,7 @@ void LoadMemoryAddresses() {
 	uintptr_t gameAddr = baseAddr + ModAPI::Util::GetStaticVariableOffset("game");
 	uintptr_t metagameAddr = baseAddr + ModAPI::Util::GetStaticVariableOffset("metagame");
 	uintptr_t plrObjAddr = gameAddr + ModAPI::Util::GetVariableOffset("Game", "mio");
+	uintptr_t currentZoneIdAddr = gameAddr + ModAPI::Util::GetVariableOffset("Game", "current_zone_id");
 	uintptr_t saveEntriesAddr = gameAddr + ModAPI::Util::GetVariableOffset("Game", "save") + ModAPI::Util::GetVariableOffset("Save", "entries");
 
 	// Add the offset from Cheat Engine
@@ -88,6 +90,7 @@ void LoadMemoryAddresses() {
 	ModAPI::Addresses::g_GameAddr = (void*)(gameAddr);
 	ModAPI::Addresses::g_PlayerObjAddr = (void*)(plrObjAddr);
 	ModAPI::Addresses::g_SaveEntriesAddress = (void*)(saveEntriesAddr);
+	ModAPI::Addresses::g_CurrentZoneIdAddress = (void*)(currentZoneIdAddr);
 
 	ModAPI::Addresses::g_PlayerVelocityAddr = (void*)(playerVelocityBaseAddr);
 

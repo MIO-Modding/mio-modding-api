@@ -1,4 +1,7 @@
 #include "mio-modding-api.h"
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 namespace ModAPI {
 	namespace Util {
@@ -46,6 +49,15 @@ namespace ModAPI {
 
 			// small extra delay to let subsystems finish initializing
 			Sleep(500);
+		}
+		MODDING_API fs::path GetFolderPathForMod(const char* mod) {
+			return fs::path("mods") / fs::path(mod);
+		}
+		MODDING_API fs::path GetFolderPathForModConfig(const char* mod) {
+			return fs::path("modconfig") / fs::path(mod);
+		}
+		MODDING_API char* GetCurrentZoneId() {
+			return ReadMemoryTyped<char*>(ModAPI::Addresses::g_CurrentZoneIdAddress);
 		}
 	}
 }

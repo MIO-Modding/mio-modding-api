@@ -6,108 +6,63 @@ using SaveEntry = ModAPI::SaveData::SaveEntry;
 
 namespace ModAPI {
     namespace SaveData {
-        extern "C" {
-            MODDING_API int GetSaveEntryCount() {
-                if (!ModAPI::SaveData::g_SaveArraySize) {
+		extern "C" {
+			MODDING_API SaveEntryValue* GetSaveEntry(const char* name) {
+				GameString flagStr = GameString((char*)name);
+				SaveEntryValue result = SaveEntryValue();
+				return ModAPI::Util::CallAssembly<SaveEntryValue*, uintptr_t, GameString*, SaveEntryValue*>(
+					ModAPI::Addresses::g_GetSaveEntryAddress,
+					(uintptr_t)ModAPI::Addresses::g_SaveEntriesAddress,
+					&flagStr,
+					&result);
+			}
+			MODDING_API bool RemoveSaveEntry(const char* name) {
+				GameString flagStr = GameString((char*)name);
+				SaveEntryValue result;
+				return ModAPI::Util::CallAssembly<bool, uintptr_t, GameString*, SaveEntryValue*>(
+					ModAPI::Addresses::g_RemoveSaveEntryAddress,
+					(uintptr_t)ModAPI::Addresses::g_SaveEntriesAddress,
+					&flagStr,
+					&result);
+			}
+            MODDING_API int32_t GetSaveEntryValueCount(const char* name) {
+				SaveEntryValue* entry = GetSaveEntry(name);
+                if (!entry) {
                     return 0;
                 }
-                return *ModAPI::SaveData::g_SaveArraySize;
-            }
-
-            // Returns a pointer to the actual entry in memory
-            MODDING_API SaveEntry* GetSaveEntryByIndex(int index) {
-                if (!ModAPI::Pointers::g_SaveArrayPtr || !*ModAPI::Pointers::g_SaveArrayPtr) {
-                    return nullptr;
-                }
-
-                int count = GetSaveEntryCount();
-                if (index < 0 || index >= count) {
-                    return nullptr;
-                }
-
-                SaveEntry* entries = (SaveEntry*)*ModAPI::Pointers::g_SaveArrayPtr;
-                return (SaveEntry*)((char*)entries + (index * 88));
-            }
-
-            // Returns a pointer to the actual entry in memory by name
-            // We don't know the hash algorithm, so we just compare names directly
-            MODDING_API SaveEntry* GetSaveEntry(const char* name) {
-                if (!ModAPI::Pointers::g_SaveArrayPtr || !*ModAPI::Pointers::g_SaveArrayPtr || !name) {
-                    return nullptr;
-                }
-
-                SaveEntry* entries = (SaveEntry*)*ModAPI::Pointers::g_SaveArrayPtr;
-                int count = GetSaveEntryCount();
-
-                for (int i = 0; i < count; i++) {
-                    SaveEntry* entry = (SaveEntry*)((char*)entries + (i * 88));
-                    // Skip empty entries
-                    if (!entry->entry_name.data) {
-                        continue;
-                    }
-                    // Compare the actual string names
-                    if (strcmp(entry->entry_name.data, name) == 0) {
-                        return entry;
-                    }
-                }
-
-                return nullptr;
-            }
-
-            MODDING_API bool SaveEntryExists(const char* name) {
-                return GetSaveEntry(name) != nullptr;
-            }
-
-            MODDING_API const char* GetSaveEntryName(int index) {
-                SaveEntry* entry = GetSaveEntryByIndex(index);
-                if (!entry || !entry->entry_name.data) {
-                    return nullptr;
-                }
-                return entry->entry_name.data;
-            }
-
-            // Helper functions for reading/writing count
-            MODDING_API bool GetSaveEntryValueCount(const char* name, int32_t* outCount) {
-                SaveEntry* entry = GetSaveEntry(name);
-                if (!entry || !outCount) {
-                    return false;
-                }
-                *outCount = entry->value.count;
-                return true;
+                return entry->count;
             }
 
             MODDING_API bool SetSaveEntryValueCount(const char* name, int32_t count) {
-                SaveEntry* entry = GetSaveEntry(name);
+				SaveEntryValue* entry = GetSaveEntry(name);
                 if (!entry) {
                     return false;
                 }
-                entry->value.count = count;
+                entry->count = count;
                 return true;
             }
 
-            MODDING_API bool GetSaveEntryValueFlags(const char* name, uint32_t* outFlags) {
-                SaveEntry* entry = GetSaveEntry(name);
-                if (!entry || !outFlags) {
-                    return false;
+            MODDING_API uint32_t GetSaveEntryValueFlags(const char* name) {
+				SaveEntryValue* entry = GetSaveEntry(name);
+                if (!entry) {
+                    return 0;
                 }
-                *outFlags = entry->value.flags;
-                return true;
+                return entry->flags;
             }
 
             MODDING_API bool SetSaveEntryValueFlags(const char* name, uint32_t flags) {
-                SaveEntry* entry = GetSaveEntry(name);
+				SaveEntryValue* entry = GetSaveEntry(name);
                 if (!entry) {
                     return false;
                 }
-                entry->value.flags = flags;
+                entry->flags = flags;
                 return true;
 			}
 			MODDING_API char* GiveFlag(const char* flag, int32_t amount) {
-				uintptr_t globalAddr = ModAPI::Addresses::g_BaseAddr + 0x10efbf0;
 				GameString flagStr = GameString((char*)flag);
 				return ModAPI::Util::CallAssembly<char*, uintptr_t, GameString, int32_t>(
 					ModAPI::Addresses::g_GiveFlagAddress,
-					globalAddr,
+					(uintptr_t)ModAPI::Addresses::g_GameAddr,
 					flagStr,
 					amount);
 			}

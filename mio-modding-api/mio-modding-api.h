@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <filesystem>
 
 #ifdef MODDING_API_EXPORTS
 #define MODDING_API __declspec(dllexport)
@@ -47,49 +48,6 @@ struct Vector2 {
 		this->x = x;
 		this->y = y;
 	}
-
-	/**
-	 * @brief Constructs a Vector2 from a packed int64.
-	 *
-	 * Unpacks two floats from a 64-bit integer where the raw IEEE 754 bit
-	 * representation of Y occupies the high 32 bits and X occupies the low
-	 * 32 bits.
-	 *
-	 * @param xyint Packed 64-bit integer containing both float components.
-	 * @see CreateXYInt64()
-	 */
-	Vector2(int64_t xyint) {
-		uint32_t b1 = static_cast<uint32_t>(static_cast<uint64_t>(xyint) >> 32);
-		uint32_t b2 = static_cast<uint32_t>(xyint & 0xFFFFFFFF);
-
-		float y;
-		float x;
-		memcpy(&y, &b1, sizeof(float));
-		memcpy(&x, &b2, sizeof(float));
-		this->x = x;
-		this->y = y;
-	}
-
-	/**
-	 * @brief Packs this Vector2 into a single int64.
-	 *
-	 * The raw IEEE 754 bit representation of Y is placed in the high 32 bits
-	 * and X in the low 32 bits.
-	 *
-	 * @return Packed int64 representation of this vector.
-	 * @see Vector2(int64_t)
-	 */
-	int64_t CreateXYInt64() {
-		uint32_t u1;
-		uint32_t u2;
-		memcpy(&u1, &y, sizeof(y));
-		memcpy(&u2, &x, sizeof(x));
-
-		uint64_t combined_u64 = (static_cast<uint64_t>(u1) << 32) | u2;
-		int64_t combined_s64 = static_cast<int64_t>(combined_u64);
-
-		return combined_s64;
-	}
 };
 
 /**
@@ -103,10 +61,7 @@ namespace ModAPI {
 	 * instead of accessing these directly.
 	 */
 	namespace Pointers {
-		extern void** g_PlayerLocationBasePtr; ///< Base pointer for the player's location pointer chain.
-		extern void** g_PlayerHealthBasePtr;   ///< Base pointer for the player's health pointer chain.
-		extern void** g_PlayerNacreBasePtr;	   ///< Base pointer for the player's nacre pointer chain.
-		extern void*** g_SaveArrayPtr;		   ///< Pointer to the save data array.
+		extern MODDING_API void** g_PlayerNodeBasePtr; ///< Base pointer for the player's node pointer chain.
 	} // namespace Pointers
 
 	/**
@@ -117,31 +72,23 @@ namespace ModAPI {
 	 * instead of accessing these directly.
 	 */
 	namespace Addresses {
-		extern uintptr_t g_BaseAddr;		///< Base Address for the mio.exe.
+		extern MODDING_API uintptr_t g_BaseAddr;		///< Base Address for the mio.exe.
 
-		extern void* g_PlayerStaminaAddr;	///< Direct address of the player's stamina value.
-		extern void* g_PlayerVelocityXAddr; ///< Direct address of the player's X velocity value, offset from the player object.
-		extern void* g_PlayerVelocityYAddr; ///< Direct address of the player's Y velocity value, offset from the player object.
-		extern void* g_MoveByMethodAddr;	///< Address of the game's internal move by method function.
-		extern void* g_PlayerObjAddr;		///< Direct address of the player object.
-		extern void* g_HitEnemyAddress;		///< Address of the game's internal hit enemy function.
-		extern void* g_MenuStateAddr;		///< Direct address of the current menu state value.
-		extern void* g_GiveFlagAddress;		///< Address of the game's internal give flag function.
+		extern MODDING_API void* g_PlayerStaminaAddr; ///< Direct address of the player's stamina value.
+		extern MODDING_API void* g_PlayerVelocityAddr; ///< Direct address of the player's velocity value, offset from the player object.
+		extern MODDING_API void* g_PlayerLocationAddr; ///< Direct address of the player's location.
+		extern MODDING_API void* g_MoveByMethodAddr;   ///< Address of the game's internal move by method function.
+		extern MODDING_API void* g_PlayerObjAddr;	   ///< Direct address of the player object.
+		extern MODDING_API void* g_HitEnemyAddress;	   ///< Address of the game's internal hit enemy function.
+		extern MODDING_API void* g_MenuStateAddr;	   ///< Direct address of the current menu state value.
+		extern MODDING_API void* g_GiveFlagAddress;	   ///< Address of the game's internal give flag function.
+		extern MODDING_API void* g_GameAddr;		   ///< Address of the game's internal Game object
+		extern MODDING_API void* g_GetSaveEntryAddress; ///< Address of the game's internal function for getting a save entry
+		extern MODDING_API void* g_SaveEntriesAddress;	///< Address of the current save file
+		extern MODDING_API void* g_PlayerHealthAddress; ///< Address of the players health
+		extern MODDING_API void* g_RemoveSaveEntryAddress; ///< Address of the game's internal function for removing a save entry
+		extern MODDING_API void* g_CurrentZoneIdAddress; ///< Address of the current zone id
 	} // namespace Addresses
-
-	/**
-	 * @brief Offsets used to resolve fields within game objects via pointer chains.
-	 *
-	 * @warning These are internal to the API. Use the provided API functions
-	 * instead of accessing these directly.
-	 */
-	namespace Offsets {
-		extern const int PLAYER_X_OFFSET;			 ///< Offset to the player's X position.
-		extern const int PLAYER_Y_OFFSET;			 ///< Offset to the player's Y position.
-		extern const int PLAYER_Z_OFFSET;			 ///< Offset to the player's Z position.
-		extern const int PLAYER_HEALTH_OFFSET;		 ///< Offset to the player's health value.
-		extern const int PLAYER_LIQUID_NACRE_OFFSET; ///< Offset to the player's liquid nacre value.
-	} // namespace Offsets
 
 	/**
 	 * @brief Enumerations used by the API.
@@ -187,14 +134,14 @@ namespace ModAPI {
 			 * @brief Get's the player's current velocity.
 			 * @return A Vector2 containing the player's X and Y velocity components.
 			 */
-			MODDING_API Vector2 GetPlayerVelocity();
+			MODDING_API Vector3 GetPlayerVelocity();
 
 			/**
 			 * @brief Sets the player's velocity.
 			 * @param velocity Target velocity as a Vector2.
 			 * @return True on success, false if either velocity pointer fails to resolve, or if there is an error setting the values.
 			 */
-			MODDING_API bool SetPlayerVelocity(Vector2 velocity);
+			MODDING_API bool SetPlayerVelocity(Vector3 velocity);
 
 			/**
 			 * @brief Gets the player's current health.
@@ -250,10 +197,9 @@ namespace ModAPI {
 
 			/**
 			 * @brief Moves the player by the given vector using the game's internal move method.
-			 * @param vector The X and Y offsets to apply.
-			 * @return The game's internal return value from the move method.
+			 * @param vector The X, Y and Z offsets to apply.
 			 */
-			MODDING_API int64_t MovePlayer(Vector2 vector);
+			MODDING_API void MovePlayer(Vector3 vector);
 		}
 	} // namespace Player
 
@@ -261,8 +207,6 @@ namespace ModAPI {
 	 * @brief Functions for reading and manipulating entries in the internal save data array.
 	 */
 	namespace SaveData {
-		extern uint32_t* g_SaveArraySize; ///<  Pointer to the number of entries in the save data array.
-
 		/**
 		 * @brief A null-terminated string as stored internally by the game.
 		 * @note Do not modify the fields of this struct directly.
@@ -275,6 +219,7 @@ namespace ModAPI {
 				this->data = data;
 				size = strlen(data);
 			}
+			GameString() {}
 		} GameString;
 		static_assert(sizeof(GameString) == 16, "GameString size mismatch — struct layout may be wrong");
 
@@ -286,6 +231,7 @@ namespace ModAPI {
 			uint32_t flags;	 ///< Flags associated with this entry.
 			int32_t count;	 ///< The count/amount of this entry.
 			BYTE unused[56]; ///< Padding - do not use.
+			SaveEntryValue() {}
 		} SaveEntryValue;
 		static_assert(sizeof(SaveEntryValue) == 64, "SaveEntryValue size mismatch — struct layout may be wrong");
 
@@ -300,43 +246,24 @@ namespace ModAPI {
 			uint32_t padding;	   ///< Alignment padding - do not use.
 			GameString entry_name; ///< The key/name of this save entry.
 			SaveEntryValue value;  ///< The value payload of this entry.
+			SaveEntry() {}
 		} SaveEntry;
 		static_assert(sizeof(SaveEntry) == 88, "SaveEntry size mismatch — struct layout may be wrong");
 
 		extern "C" {
 			/**
-			 * @brief Gets the total number of entries in the save data array.
-			 * @return The number of save entries as an integer.
-			 */
-			MODDING_API int GetSaveEntryCount();
-
-			/**
-			 * @brief Gets a save entry by its index in the save data array.
-			 * @param index Zero-based index of the entry
-			 * @return Pointer to the SaveEntry, or nullptr if the index is out of range.
-			 */
-			MODDING_API SaveEntry* GetSaveEntryByIndex(int index);
-
-			/**
 			 * @brief Gets a save entry by its key/name.
 			 * @param name The key/name of the the entry to find.
 			 * @return Pointer to the SaveEntry, or nullptr if not found.
 			 */
-			MODDING_API SaveEntry* GetSaveEntry(const char* name);
+			MODDING_API SaveEntryValue* GetSaveEntry(const char* name);
 
 			/**
-			 * @brief Checks whether a save entry with the given key/name exists.
-			 * @param name The key/name to check.
-			 * @return True if the entry exists, false otherwise.
+			 * @brief Removes a save entry by its key/name.
+			 * @param name The key/name of the the entry to remove.
+			 * @return If the removal was successful.
 			 */
-			MODDING_API bool SaveEntryExists(const char* name);
-
-			/**
-			 * @brief Gets the key/name of a save entry by its index.
-			 * @param index Zero-based index of the entry.
-			 * @return The name of the entry, or nullptr if the index is out of range.
-			 */
-			MODDING_API const char* GetSaveEntryName(int index);
+			MODDING_API bool RemoveSaveEntry(const char* name);
 
 			/**
 			 * @brief Gets the count value of a save entry.
@@ -344,7 +271,7 @@ namespace ModAPI {
 			 * @param outCount Pointer to an int32_t to receive the count value.
 			 * @return True on success, false if the entry was not found.
 			 */
-			MODDING_API bool GetSaveEntryValueCount(const char* name, int32_t* outCount);
+			MODDING_API int32_t GetSaveEntryValueCount(const char* name);
 
 			/**
 			 * @brief Sets the count value of a save entry.
@@ -360,7 +287,7 @@ namespace ModAPI {
 			 * @param outFlags Pointer to a uint32_t to receive the flags value.
 			 * @return True on success, false if the entry was not found.
 			 */
-			MODDING_API bool GetSaveEntryValueFlags(const char* name, uint32_t* outFlags);
+			MODDING_API uint32_t GetSaveEntryValueFlags(const char* name);
 
 			/**
 			 * @brief Sets the flags of a save entry.
@@ -486,6 +413,51 @@ namespace ModAPI {
 			 * @note This is a blocking call. Do not call this on the main thread.
 			 */
 			MODDING_API void WaitForSaveLoaded();
+
+			/**
+			 * @brief Loads a method offset from the methods.json
+			 * @param Key of method
+			 * @return Offset of the method
+			 */
+			MODDING_API uintptr_t GetMethodOffset(const char* method);
+			/**
+			 * @brief Loads a method size from the methods.json
+			 * @param Key of method
+			 * @return Size of the method
+			 */
+			MODDING_API size_t GetMethodSize(const char* method);
+			/**
+			 * @brief Loads a static variable offset from the variable.json
+			 * @param Key of variable
+			 * @return Offset of the static variable
+			 */
+			MODDING_API uintptr_t GetStaticVariableOffset(const char* variable);
+			/**
+			 * @brief Loads a variable offset in a struct from the structs.json
+			 * @param Struct to get offset from
+			 * @param Variable in struct
+			 * @return Offset of the variable
+			 */
+			MODDING_API uintptr_t GetVariableOffset(const char* structure, const char* variable);
+
+			/**
+			 * @brief Gets the path to a mods folder
+			 * @param Mod to get path to
+			 * @return The path of the mods folder
+			 */
+			MODDING_API std::filesystem::path GetFolderPathForMod(const char* mod);
+
+			/**
+			 * @brief Gets the path to a mods config folder
+			 * @param Mod to get path to
+			 * @return The path of the mods config folder
+			 */
+			MODDING_API std::filesystem::path GetFolderPathForModConfig(const char* mod);
+			/**
+			 * @brief Gets the id of the current zone
+			 * @return The id of the current zone
+			 */
+			MODDING_API char* GetCurrentZoneId();
 		}
 
 		/**

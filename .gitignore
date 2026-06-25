@@ -21,6 +21,12 @@ x64/
 # Vcpkg
 vcpkg_installed/
 
+# Doxygen
+Doxyfile.bak
+html/
+latex/
+
 # Custom
 .vscode/
+*.code-workspace
 header.txt

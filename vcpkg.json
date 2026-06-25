@@ -4,6 +4,8 @@
     "lz4",
     "polyhook2",
     "zstd",
-    "murmurhash"
+    "murmurhash",
+    "polyhook2",
+    "nlohmann-json"
   ]
 }

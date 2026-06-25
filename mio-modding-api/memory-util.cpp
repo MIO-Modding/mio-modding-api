@@ -1,19 +1,27 @@
 #include "Windows.h"
 #include <psapi.h>
 #include "mio-modding-api.h"
+#include <nlohmann/json.hpp>
+#include <filesystem>
+#include <iostream>
+#include <fstream>
+#include "saved-addresses.h"
+
+namespace fs = std::filesystem;
+
 
 namespace ModAPI {
     namespace Util {
-        extern "C" {
-            MODDING_API bool WriteMemory(void* address, const void* data, size_t size) {
-                DWORD oldProtect;
-                if (!VirtualProtect(address, size, PAGE_EXECUTE_READWRITE, &oldProtect)) {
-                    return false;
-                }
-                memcpy(address, data, size);
-                VirtualProtect(address, size, oldProtect, &oldProtect);
-                return true;
-            }
+		extern "C" {
+			MODDING_API bool WriteMemory(void* address, const void* data, size_t size) {
+				DWORD oldProtect;
+				if(!VirtualProtect(address, size, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+					return false;
+				}
+				memcpy(address, data, size);
+				VirtualProtect(address, size, oldProtect, &oldProtect);
+				return true;
+			}
 
             MODDING_API bool ReadMemory(void* address, void* buffer, size_t size) {
                 DWORD oldProtect;
@@ -94,7 +102,21 @@ namespace ModAPI {
                     return nullptr;
 
                 return (void*)((uintptr_t)ptr + offset);
-            }
+			}
+			MODDING_API uintptr_t GetMethodOffset(const char* method) {
+				MethodAddress addr = Internal::methods[std::string(method)];
+				return addr.addr;
+			}
+			MODDING_API size_t GetMethodSize(const char* method) {
+				MethodAddress addr = Internal::methods[std::string(method)];
+				return addr.size;
+			}
+			MODDING_API uintptr_t GetStaticVariableOffset(const char* variable) {
+				return Internal::staticVariables[std::string(variable)];
+			}
+			MODDING_API uintptr_t GetVariableOffset(const char* structure, const char* variable) {
+				return Internal::structs[std::string(structure)][std::string(variable)];
+			}
         }
     }
 }

@@ -89,16 +89,8 @@
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnableManifest>true</VcpkgEnableManifest>
   </PropertyGroup>
-  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
-  </PropertyGroup>
-  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
-  </PropertyGroup>
-  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
-  </PropertyGroup>
   <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <VcpkgUseStatic>true</VcpkgUseStatic>
     <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -212,15 +204,18 @@
     <ClInclude Include="gin-serialization.h" />
     <ClInclude Include="mio-modding-api-internal.h" />
     <ClInclude Include="mio-modding-api.h" />
+    <ClInclude Include="saved-addresses.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="flamby-handling.cpp" />
     <ClCompile Include="gin-serialization.cpp" />
+    <ClCompile Include="general-util.cpp" />
     <ClCompile Include="hooks.cpp" />
     <ClCompile Include="memory-util.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="save-data.cpp" />
+    <ClCompile Include="saved-addresses.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

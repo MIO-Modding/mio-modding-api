@@ -1,0 +1,57 @@
+name: Build Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-dll:
+    permissions:
+      contents: write
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+
+      - name: Integrate vcpkg with MSBuild
+        run: vcpkg integrate install
+        shell: cmd
+
+      - name: Build DLL
+        run: msbuild mio-modding-api.sln /p:Configuration=Release /p:Platform=x64
+        shell: pwsh
+
+      - name: Package release assets
+        run: |
+          Compress-Archive -Path "x64/Release/mio-modding-api/*" -DestinationPath "x64/Release/mio-modding-api.zip"
+          Copy-Item "mio-modding-api/mio-modding-api.h" "x64/Release/mio-modding-api.h"
+        shell: pwsh
+
+      - name: Upload artifacts (for testing)
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: |
+            x64/Release/mio-modding-api.zip
+            x64/Release/mio-modding-api.lib
+            x64/Release/mio-modding-api.h
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          files: |
+            x64/Release/mio-modding-api.zip
+            x64/Release/mio-modding-api.lib
+            x64/Release/mio-modding-api.h

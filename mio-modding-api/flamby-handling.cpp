@@ -6,81 +6,57 @@
 #include "mio-modding-api.h"
 #include "gin-serialization.h"
 #include "mio-modding-api-internal.h"
+#include "flamby-handling.h"
 
 namespace fs = std::filesystem;
 
-std::map<fs::path, std::vector<char>> originalFlambyFileData;
-std::map<fs::path, std::vector<char>> newFlambyFileData;
-std::map<fs::path, std::pair<GinKey, std::map<std::string, std::pair<GinSectionInfo, std::vector<char>>>>> ginData;
-std::vector<fs::path> overwrittenFlambyData;
+std::map<fs::path, std::map<int32_t, GinPatch>> patches;
+void AddGinPatch(fs::path file, fs::path patch) {
+	void* ginReadReadHeader = (void*)(ModAPI::Addresses::g_BaseAddr + ModAPI::Util::GetMethodOffset("public: void __cdecl Gin_read::read_header(bool)"));
+	void* ginReadFromFile = (void*)(ModAPI::Addresses::g_BaseAddr + ModAPI::Util::GetMethodOffset("public: static struct Gin_read __cdecl Gin_read::from_file(struct String const &)"));
+	void* ginReadFindSection = (void*)(ModAPI::Addresses::g_BaseAddr + ModAPI::Util::GetMethodOffset("public: int __cdecl Gin_read::find_section(struct String const &)"));
+	
+	Gin_read* ginRead = new Gin_read();
+	Gin_read* origGinRead = new Gin_read();
 
-void OverwriteFlambyFile(fs::path file, std::vector<char> data) {
-	if (fs::exists(file)) {
-		overwrittenFlambyData.push_back(file);
+	auto ginStr = ModAPI::SaveData::GameString((char*)patch.string().c_str());
+	auto origGinStr = ModAPI::SaveData::GameString((char*)file.string().c_str());
+
+	ModAPI::Util::CallAssembly<Gin_read*, Gin_read*, ModAPI::SaveData::GameString*>(ginReadFromFile, ginRead, &ginStr);
+
+	ModAPI::Util::CallAssembly<Gin_read*, Gin_read*, ModAPI::SaveData::GameString*>(ginReadFromFile, origGinRead, &origGinStr);
+
+	ModAPI::Util::CallAssembly<Gin_read*, Gin_read*, bool>(ginReadReadHeader, ginRead, 1);
+	ModAPI::Util::CallAssembly<Gin_read*, Gin_read*, bool>(ginReadReadHeader, origGinRead, 1);
+
+	std::map<int32_t, GinPatch> lPatches;
+	for(int i = 0; i < ginRead->header.section_count; i++) {
+		auto nameStr = ModAPI::SaveData::GameString(ginRead->sections.data[i].name);
+
+		int32_t sectionIndex = ModAPI::Util::CallAssembly<int32_t, Gin_read*, ModAPI::SaveData::GameString*>(ginReadFindSection, origGinRead, &nameStr);
+		LogMessage(std::to_string(sectionIndex).c_str());
+		LogMessage(nameStr.data);
+
+		GinPatch ginPatch = GinPatch();
+		ginPatch.targetIndex = i;
+		ginPatch.targetRead = ginRead;
+
+		lPatches[sectionIndex] = ginPatch;
 	}
-	newFlambyFileData[file] = data;
+
+	patches[std::string(origGinRead->path.data)] = lPatches;
+	delete origGinRead;
 }
-void ModifyGin(fs::path file, std::string section, std::vector<char> data) {
-	if (fs::exists(file) && ginData.count(file) <= 0) {
-		ginData[file] = DecompileGin(file);
+GinPatch GetPatch(fs::path file, int32_t index) {
+	return patches[file][index];
+}
+bool HasPatch(fs::path file, int32_t index) {
+	if (patches.count(file) && patches[file].count(index)) {
+		return true;
 	}
-	ginData[file].second[section].second = data;
+	return false;
 }
-void ModifyGin(fs::path file, std::string section, fs::path path) {
-	std::ifstream fileData(path, std::ios::binary);
-	std::vector<char> bytes(
-		(std::istreambuf_iterator<char>(fileData)),
-		(std::istreambuf_iterator<char>())
-	);
-	fileData.close();
-	ModifyGin(file, section, bytes);
-}
-void LoadFlambyData(fs::path directory) {
-	for (const fs::directory_entry entry : fs::directory_iterator(directory)) {
-		if (entry.is_regular_file()) {
-			fs::path file = entry.path();
-			std::ifstream fileData(file, std::ios::binary);
-			std::vector<char> bytes(
-				(std::istreambuf_iterator<char>(fileData)),
-				(std::istreambuf_iterator<char>())
-			);
-			fileData.close();
-			originalFlambyFileData[file] = bytes;
-		}
-		else if (entry.is_directory()) {
-			LoadFlambyData(entry.path());
-		}
-	}
-}
-void RestoreFlambyOriginalData() {
-	fs::remove_all("flamby_modified");
-	fs::create_directory("flamby_modified");
-	for (fs::path key : overwrittenFlambyData) {
-		std::vector<char> value = originalFlambyFileData[key];
-		fs::copy(key, fs::path("flamby_modified") / key);
-		fs::remove(key);
-		std::ofstream stream(key, std::ios::out | std::ios::binary);
-		stream.write(reinterpret_cast<const char*>(value.data()), value.size());
-		stream.close();
-	}
-}
-void ApplyFlambyData() {
-	LogMessage("Recompiling Gin");
-	for (std::pair<fs::path, std::pair<GinKey, std::map<std::string, std::pair<GinSectionInfo, std::vector<char>>>>> i : ginData) {
-		OverwriteFlambyFile(i.first, RecompileGin(i.second));
-	}
-	LogMessage("Finished Recompiling Gin");
-	LogMessage("Writing Gin Data");
-	for (std::pair<fs::path, std::vector<char>> i : newFlambyFileData) {
-		fs::path key = i.first;
-		std::vector<char> value = i.second;
-		fs::remove(key);
-		std::ofstream stream(key, std::ios::out | std::ios::binary);
-		stream.write(value.data(), value.size());
-		stream.close();
-	}
-	LogMessage("Finished Writing Gin Data");
-}
+
 void PatchChecksum() {
 	HMODULE hModule = GetModuleHandleA("mio.exe");
 	uintptr_t baseAddr = (uintptr_t)hModule;

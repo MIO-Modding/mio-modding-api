@@ -25,6 +25,7 @@ namespace ModAPI {
 		MODDING_API void* g_PlayerHealthAddress = nullptr;
 		MODDING_API void* g_RemoveSaveEntryAddress = nullptr;
 		MODDING_API void* g_CurrentZoneIdAddress = nullptr;
+		MODDING_API void* g_ReadSectionDataAddr = nullptr;
 	}
 
 	// Base address for pointer chain
@@ -76,6 +77,7 @@ void LoadMemoryAddresses() {
 	uintptr_t moveByFunctionAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: void __cdecl Mio::move_by_slide(struct Vec<float,3>)");
 	uintptr_t getSaveEntryAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: struct Save_entry * __cdecl Hashmap<struct String,struct Save_entry>::get_or_set__refs(struct String const &,struct Save_entry const &)");
 	uintptr_t removeSaveEntryAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: bool __cdecl Hashmap<struct String,struct Save_entry>::try_remove(struct String const &,struct Save_entry *)");
+	uintptr_t readSectionDataAddress = baseAddr + ModAPI::Util::GetMethodOffset("public: void __cdecl Gin_read::read_section_data(unsigned int,unsigned char *,unsigned int)");
 	
 	// Store the address
 	ModAPI::Addresses::g_BaseAddr = baseAddr;
@@ -100,6 +102,13 @@ void LoadMemoryAddresses() {
 	ModAPI::Addresses::g_GiveFlagAddress = (void*)giveFlagFunctionAddress;
 	ModAPI::Addresses::g_GetSaveEntryAddress = (void*)getSaveEntryAddress;
 	ModAPI::Addresses::g_RemoveSaveEntryAddress = (void*)removeSaveEntryAddress;
+	ModAPI::Addresses::g_ReadSectionDataAddr = (void*)readSectionDataAddress;
+}
+void PatchGins() {
+	AddGinPatch("flamby/misc_files.gin", "custom_gin/misc_files.gin");
+}
+void PatchAllGins() {
+	PatchGins();
 }
 extern "C" __declspec(dllexport) void ModInit(char* id) {
 	//Making the printfs actually be sent to console
@@ -111,18 +120,7 @@ extern "C" __declspec(dllexport) void ModInit(char* id) {
 
 	ModAPI::Hooks::InitializeHooks();
 
-	LogMessage("Loading Flamby Data");
-	LoadFlambyData(fs::path("flamby"));
-	LogMessage("Loaded Flamby Data");
-
-	//Warning: This file exists on my pc not in the repo
-	ModifyGin("flamby/misc_files.gin", "assets/loca/lockit_other.csv", "decomp/000_assetslocalockit_other.csv");
-
 	PatchChecksum();
-
-	LogMessage("Applying Flamby Data");
-	ApplyFlambyData();
-	LogMessage("Applying Flamby Data");
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule,

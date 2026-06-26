@@ -1,11 +1,33 @@
 #include "Windows.h"
 #include "mio-modding-api.h"
+#include "flamby-handling.h"
 #include "polyhook2/Detour/NatDetour.hpp"
 #include <vector>
 #include <functional>
+#include "mio-modding-api-internal.h"
 
 namespace ModAPI {
 	namespace Hooks {
+		namespace Gin {
+			bool patchedGins = false;
+			uintptr_t readsectiondata_trampoline = NULL;
+
+			NOINLINE void __cdecl ReadSectionDataHook(Gin_read* self, uint32_t section_index, void* mem, uint32_t size) {
+				if(!patchedGins) {
+					PatchAllGins();
+					patchedGins = true;
+				}
+				std::string path = std::string(self->path.data);
+				typedef void func(Gin_read * self, uint32_t section_index, void* mem, uint32_t size);
+				func* trampoline = (func*)(readsectiondata_trampoline);
+				if(HasPatch(path, section_index)) {
+					GinPatch patch = GetPatch(path, section_index);
+					trampoline(patch.targetRead, patch.targetIndex, mem, patch.size);
+				} else {
+					trampoline(self, section_index, mem, size);
+				}
+			}
+		}
 		namespace Combat {
 			// Functions hooked to OnHitEnemy
 			std::vector<std::function<void(uintptr_t, uintptr_t)>> hitenemy_hooks;
@@ -107,6 +129,8 @@ namespace ModAPI {
 			enemyhit_hook_detour.hook();
 			static PLH::NatDetour giveflag_hook_detour = PLH::NatDetour((uintptr_t)ModAPI::Addresses::g_GiveFlagAddress, (uintptr_t)Flags::ResolveOnGiveFlag, &Flags::giveflag_trampoline);
 			giveflag_hook_detour.hook();
+			static PLH::NatDetour readsectiondata_hook_detour = PLH::NatDetour((uintptr_t)ModAPI::Addresses::g_ReadSectionDataAddr, (uintptr_t)Gin::ReadSectionDataHook, &Gin::readsectiondata_trampoline);
+			readsectiondata_hook_detour.hook();
 
 			static PLH::NatDetour rtlqpc_detour = PLH::NatDetour(
 				(uintptr_t)GetProcAddress(GetModuleHandleA("ntdll.dll"), "RtlQueryPerformanceCounter"),

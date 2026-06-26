@@ -88,6 +88,7 @@ namespace ModAPI {
 		extern MODDING_API void* g_PlayerHealthAddress; ///< Address of the players health
 		extern MODDING_API void* g_RemoveSaveEntryAddress; ///< Address of the game's internal function for removing a save entry
 		extern MODDING_API void* g_CurrentZoneIdAddress; ///< Address of the current zone id
+		extern MODDING_API void* g_ReadSectionDataAddr; ///< Address of the games internal function for reading a sections data from a Gin_read struct
 	} // namespace Addresses
 
 	/**

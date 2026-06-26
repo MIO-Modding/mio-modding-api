@@ -37,6 +37,21 @@ struct GameArray {
 	uint32_t capacity;
 	T* data;
 };
+struct Ordered_gin_read {
+	uint32_t flags;
+	int32_t section;
+	void* asset;
+};
+
+struct Gin_read_batcher {
+	int32_t status;
+	uint8_t pad_0[4];
+	GameArray<Ordered_gin_read> ordered_reads;
+	uint32_t next_idx;
+	uint32_t next_subsection;
+	GameArray<uint8_t> file_chunk;
+	uint64_t chunk_file_offset;
+};
 
 struct Gin_read {
 	ModAPI::SaveData::GameString path;
@@ -46,7 +61,7 @@ struct Gin_read {
 	GameArray<Gin_section_header> sections;
 	uint8_t header_auto_updated;
 	uint32_t original_version;
-	uint8_t batcher[0x38];
+	Gin_read_batcher batcher;
 };
 
 

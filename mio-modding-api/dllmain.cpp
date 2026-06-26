@@ -6,6 +6,7 @@
 #include "mio-modding-api-internal.h"
 #include "flamby-handling.h"
 #include "saved-addresses.h"
+#include "gin-serialization.h"
 
 namespace ModAPI {
 	// Constant addresses
@@ -105,7 +106,9 @@ void LoadMemoryAddresses() {
 	ModAPI::Addresses::g_ReadSectionDataAddr = (void*)readSectionDataAddress;
 }
 void PatchGins() {
-	AddGinPatch("flamby/misc_files.gin", "custom_gin/misc_files.gin");
+	//TODO: make an event thingy for this so that other mods can call their patches at same time
+	//also remove this line because its testing lol
+	AddGinPatch("flamby/assets.gin", "custom_gin/assets_override.gin");
 }
 void PatchAllGins() {
 	PatchGins();

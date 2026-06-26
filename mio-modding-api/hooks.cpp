@@ -21,6 +21,23 @@ namespace ModAPI {
 				typedef void func(Gin_read * self, uint32_t section_index, void* mem, uint32_t size);
 				func* trampoline = (func*)(readsectiondata_trampoline);
 				if(HasPatch(path, section_index)) {
+					if (self->batcher.status == 0x2) {
+						
+						auto& batcher = self->batcher;
+						uint32_t next_subsection = batcher.next_subsection;
+
+						bool is_bit_set = (batcher.ordered_reads.data[batcher.next_idx].flags & 1) != 0;
+						uint32_t next;
+						if(!is_bit_set || next_subsection > 1) {
+							batcher.next_idx = batcher.next_idx + 1;
+							next = 0;
+						} else {
+							next = next_subsection + 1;
+						}
+
+						batcher.next_subsection = next;
+						self->batcher = batcher;
+					}
 					GinPatch patch = GetPatch(path, section_index);
 					trampoline(patch.targetRead, patch.targetIndex, mem, patch.size);
 				} else {

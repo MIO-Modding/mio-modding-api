@@ -201,7 +201,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="flamby-handling.h" />
-    <ClInclude Include="gin-serialization.h" />
     <ClInclude Include="mio-modding-api-internal.h" />
     <ClInclude Include="mio-modding-api.h" />
     <ClInclude Include="saved-addresses.h" />
@@ -209,7 +208,6 @@
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="flamby-handling.cpp" />
-    <ClCompile Include="gin-serialization.cpp" />
     <ClCompile Include="general-util.cpp" />
     <ClCompile Include="hooks.cpp" />
     <ClCompile Include="memory-util.cpp" />

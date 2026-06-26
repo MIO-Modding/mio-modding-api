@@ -22,16 +22,17 @@ void AddGinPatch(fs::path file, fs::path patch) {
 	auto ginStr = ModAPI::SaveData::GameString((char*)patch.string().c_str());
 	auto origGinStr = ModAPI::SaveData::GameString((char*)file.string().c_str());
 
+	ModAPI::Util::CallAssembly<Gin_read*, Gin_read*, ModAPI::SaveData::GameString*>(ginReadFromFile, origGinRead, &origGinStr);
 	ModAPI::Util::CallAssembly<Gin_read*, Gin_read*, ModAPI::SaveData::GameString*>(ginReadFromFile, ginRead, &ginStr);
 
-	ModAPI::Util::CallAssembly<Gin_read*, Gin_read*, ModAPI::SaveData::GameString*>(ginReadFromFile, origGinRead, &origGinStr);
-
-	ModAPI::Util::CallAssembly<Gin_read*, Gin_read*, bool>(ginReadReadHeader, ginRead, 1);
+	
 	ModAPI::Util::CallAssembly<Gin_read*, Gin_read*, bool>(ginReadReadHeader, origGinRead, 1);
+	ModAPI::Util::CallAssembly<Gin_read*, Gin_read*, bool>(ginReadReadHeader, ginRead, 1);
 
 	std::map<int32_t, GinPatch> lPatches;
 	for(int i = 0; i < ginRead->header.section_count; i++) {
-		auto nameStr = ModAPI::SaveData::GameString(ginRead->sections.data[i].name);
+		auto& data = ginRead->sections.data[i];
+		auto nameStr = ModAPI::SaveData::GameString(data.name);
 
 		int32_t sectionIndex = ModAPI::Util::CallAssembly<int32_t, Gin_read*, ModAPI::SaveData::GameString*>(ginReadFindSection, origGinRead, &nameStr);
 		LogMessage(std::to_string(sectionIndex).c_str());
@@ -40,6 +41,7 @@ void AddGinPatch(fs::path file, fs::path patch) {
 		GinPatch ginPatch = GinPatch();
 		ginPatch.targetIndex = i;
 		ginPatch.targetRead = ginRead;
+		ginPatch.size = data.size;
 
 		lPatches[sectionIndex] = ginPatch;
 	}

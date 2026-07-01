@@ -6,7 +6,6 @@
 #include "mio-modding-api-internal.h"
 #include "flamby-handling.h"
 #include "saved-addresses.h"
-#include "gin-serialization.h"
 
 namespace ModAPI {
 	// Constant addresses

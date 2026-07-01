@@ -1,0 +1,6 @@
+{
+    "id": "io.github.mio-modding.mio-modding-api",
+    "name": "Mio Modding Api",
+    "main": "MioModdingApi.dll",
+    "dependencies": []
+}

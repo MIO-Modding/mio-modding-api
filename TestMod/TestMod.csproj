@@ -4,15 +4,20 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
     <Reference Include="MioModdingApi">
-      <HintPath>..\MioModdingApi\bin\Debug\net8.0\MioModdingApi.dll</HintPath>
+      <HintPath>../MioModdingApi/bin/Debug/net8.0/MioModdingApi.dll</HintPath>
     </Reference>
     <Reference Include="MioModLoader">
-      <HintPath>lib\MioModLoader.dll</HintPath>
+      <HintPath>../lib/MioModLoader.dll</HintPath>
     </Reference>
   </ItemGroup>
+	
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Exec Command="call &quot;$(ProjectDir)post-build.bat&quot; &quot;$(TargetPath)&quot; &quot;$(ProjectName)&quot;" />
+	</Target>
 
 </Project>

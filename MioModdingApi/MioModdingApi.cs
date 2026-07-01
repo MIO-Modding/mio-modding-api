@@ -1,4 +1,5 @@
 ﻿using MioModLoader;
+using PdbToCSharp;
 using System.Reflection;
 namespace MioModdingApi
 {
@@ -11,10 +12,7 @@ namespace MioModdingApi
         public override void Initialize()
         {
             LogMessage("Loaded Mio Modding Api");
-        }
-        public static void CoolMethod()
-        {
-            ModLoader.LogMessage("COOL METHOD CALLED");
+            MioTestClass.ModuleBase = ModLoader.mioMemoryAddress;
         }
     }
 }

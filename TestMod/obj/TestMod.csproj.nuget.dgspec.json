@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\proat\\OneDrive\\Documents\\mio-modding-api\\TestMod\\TestMod.csproj": {}
+    "C:\\Users\\Cmdpro\\Documents\\mio-modding-api\\TestMod\\TestMod.csproj": {}
   },
   "projects": {
-    "C:\\Users\\proat\\OneDrive\\Documents\\mio-modding-api\\TestMod\\TestMod.csproj": {
+    "C:\\Users\\Cmdpro\\Documents\\mio-modding-api\\TestMod\\TestMod.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\proat\\OneDrive\\Documents\\mio-modding-api\\TestMod\\TestMod.csproj",
+        "projectUniqueName": "C:\\Users\\Cmdpro\\Documents\\mio-modding-api\\TestMod\\TestMod.csproj",
         "projectName": "TestMod",
-        "projectPath": "C:\\Users\\proat\\OneDrive\\Documents\\mio-modding-api\\TestMod\\TestMod.csproj",
-        "packagesPath": "C:\\Users\\proat\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\proat\\OneDrive\\Documents\\mio-modding-api\\TestMod\\obj\\",
+        "projectPath": "C:\\Users\\Cmdpro\\Documents\\mio-modding-api\\TestMod\\TestMod.csproj",
+        "packagesPath": "C:\\Users\\Cmdpro\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Cmdpro\\Documents\\mio-modding-api\\TestMod\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\proat\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Cmdpro\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -26,6 +26,7 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -65,7 +66,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.310/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.315/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

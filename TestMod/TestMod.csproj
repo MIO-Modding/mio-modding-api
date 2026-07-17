@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="PolyHook2.NET" Version="1.1.3" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="MioModdingApi">
       <HintPath>../MioModdingApi/bin/Debug/net8.0/MioModdingApi.dll</HintPath>
     </Reference>

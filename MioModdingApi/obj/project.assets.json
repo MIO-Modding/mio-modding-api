@@ -1,11 +1,147 @@
 {
   "version": 3,
   "targets": {
-    "net8.0": {}
+    "net8.0": {
+      "PolyHook2.NET/1.1.3": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/PolyHook2.NET.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/PolyHook2.NET.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/PolyHook2.NET.props": {}
+        },
+        "runtimeTargets": {
+          "runtimes/linux-x64/native/libcpolyhook2.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/win-x64/native/PolyHook_2.dll": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x64/native/PolyHook_2.pdb": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x64/native/Zydis.dll": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x64/native/Zydis.pdb": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x64/native/asmjit.dll": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x64/native/asmjit.pdb": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x64/native/asmtk.dll": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x64/native/asmtk.pdb": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x64/native/cpolyhook2.dll": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x86/native/PolyHook_2.dll": {
+            "assetType": "native",
+            "rid": "win-x86"
+          },
+          "runtimes/win-x86/native/PolyHook_2.pdb": {
+            "assetType": "native",
+            "rid": "win-x86"
+          },
+          "runtimes/win-x86/native/Zydis.dll": {
+            "assetType": "native",
+            "rid": "win-x86"
+          },
+          "runtimes/win-x86/native/Zydis.pdb": {
+            "assetType": "native",
+            "rid": "win-x86"
+          },
+          "runtimes/win-x86/native/asmjit.dll": {
+            "assetType": "native",
+            "rid": "win-x86"
+          },
+          "runtimes/win-x86/native/asmjit.pdb": {
+            "assetType": "native",
+            "rid": "win-x86"
+          },
+          "runtimes/win-x86/native/asmtk.dll": {
+            "assetType": "native",
+            "rid": "win-x86"
+          },
+          "runtimes/win-x86/native/asmtk.pdb": {
+            "assetType": "native",
+            "rid": "win-x86"
+          },
+          "runtimes/win-x86/native/cpolyhook2.dll": {
+            "assetType": "native",
+            "rid": "win-x86"
+          }
+        }
+      }
+    }
   },
-  "libraries": {},
+  "libraries": {
+    "PolyHook2.NET/1.1.3": {
+      "sha512": "YllvSVfy5jtkO1HWHGhcIuG1DliIy5MLNCE4h6NTV2C95HDaJVlwUQyAjEjs45obOhxIdQ1M4FDriZYLh2L4XA==",
+      "type": "package",
+      "path": "polyhook2.net/1.1.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.md",
+        "README.md",
+        "buildTransitive/PolyHook2.NET.props",
+        "lib/net48/PolyHook2.NET.dll",
+        "lib/net48/PolyHook2.NET.xml",
+        "lib/net8.0/PolyHook2.NET.dll",
+        "lib/net8.0/PolyHook2.NET.xml",
+        "logo.png",
+        "polyhook2.net.1.1.3.nupkg.sha512",
+        "polyhook2.net.nuspec",
+        "runtimes/linux-x64/native/libcpolyhook2.so",
+        "runtimes/win-x64/native/PolyHook_2.dll",
+        "runtimes/win-x64/native/PolyHook_2.pdb",
+        "runtimes/win-x64/native/Zydis.dll",
+        "runtimes/win-x64/native/Zydis.pdb",
+        "runtimes/win-x64/native/asmjit.dll",
+        "runtimes/win-x64/native/asmjit.pdb",
+        "runtimes/win-x64/native/asmtk.dll",
+        "runtimes/win-x64/native/asmtk.pdb",
+        "runtimes/win-x64/native/cpolyhook2.dll",
+        "runtimes/win-x86/native/PolyHook_2.dll",
+        "runtimes/win-x86/native/PolyHook_2.pdb",
+        "runtimes/win-x86/native/Zydis.dll",
+        "runtimes/win-x86/native/Zydis.pdb",
+        "runtimes/win-x86/native/asmjit.dll",
+        "runtimes/win-x86/native/asmjit.pdb",
+        "runtimes/win-x86/native/asmtk.dll",
+        "runtimes/win-x86/native/asmtk.pdb",
+        "runtimes/win-x86/native/cpolyhook2.dll"
+      ]
+    }
+  },
   "projectFileDependencyGroups": {
-    "net8.0": []
+    "net8.0": [
+      "PolyHook2.NET >= 1.1.3"
+    ]
   },
   "packageFolders": {
     "C:\\Users\\Cmdpro\\.nuget\\packages\\": {},
@@ -57,6 +193,12 @@
     "frameworks": {
       "net8.0": {
         "targetAlias": "net8.0",
+        "dependencies": {
+          "PolyHook2.NET": {
+            "target": "Package",
+            "version": "[1.1.3, )"
+          }
+        },
         "imports": [
           "net461",
           "net462",

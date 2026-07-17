@@ -1,6 +1,8 @@
 ﻿using MioModLoader;
-using PdbToCSharp;
+using PolyHook2.API;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 namespace TestMod
 {
     public class TestMod : Mod
@@ -11,23 +13,26 @@ namespace TestMod
 
         public override void Initialize()
         {
-            Task.Run(async () =>
-            {
-                await Task.Delay(100);
-                Thread thread = new Thread(Loop);
-                thread.UnsafeStart();
-            });
+            Hooks();
         }
-        private unsafe void Loop()
+        static X64Detour? fixedUpdateDetour;
+        private static unsafe void Hooks()
         {
-            while (true)
+            delegate* unmanaged[Cdecl]<MioGame.Game*, void> fixedUpdateHook = &FixedUpdateHook;
+            fixedUpdateDetour = new X64Detour((ulong)MioGame.Game.Pointers.fixed_update, (ulong)fixedUpdateHook);
+            fixedUpdateDetour.Hook();
+        }
+        [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+        private static unsafe void FixedUpdateHook(MioGame.Game* game)
+        {
+            var mio = game->mio;
+            if (mio.node != null && !mio.cutscene.active && !mio.walk_bot.active && mio.hook.state._value == MioGame.Mio.Hook.State.Inactive)
             {
-                Thread.Sleep(1000 / 60);
-                if (MioTestClass.game == null) continue;
-                var node = MioTestClass.game->mio.node;
-                if (node == null) continue;
-                node->_transform.translation += new System.Numerics.Vector3(0.5f, 0, 0);
+                mio.move_by_slide(new MioGame.Vec_float_3() { Base = new MioGame._vec_storage_float_3() { x = 0.1f } });
             }
+            ulong trampAddr = fixedUpdateDetour!.TrampolineAddress;
+            var originalFunc = (delegate* unmanaged[Cdecl]<MioGame.Game*, void>)trampAddr;
+            originalFunc(game);
         }
     }
 }

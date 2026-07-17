@@ -13,4 +13,7 @@
     <SourceRoot Include="C:\Users\Cmdpro\.nuget\packages\" />
     <SourceRoot Include="C:\Program Files (x86)\Microsoft Visual Studio\Shared\NuGetPackages\" />
   </ItemGroup>
+  <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)polyhook2.net\1.1.3\buildTransitive\PolyHook2.NET.props" Condition="Exists('$(NuGetPackageRoot)polyhook2.net\1.1.3\buildTransitive\PolyHook2.NET.props')" />
+  </ImportGroup>
 </Project>

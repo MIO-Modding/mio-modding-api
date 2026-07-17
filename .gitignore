@@ -32,3 +32,4 @@ latex/
 .vscode/
 *.code-workspace
 header.txt
+*/obj/

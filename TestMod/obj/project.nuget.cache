@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "L526H7YCXoI=",
+  "dgSpecHash": "RYeOGdgTBVw=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Cmdpro\\Documents\\mio-modding-api\\TestMod\\TestMod.csproj",
+  "projectFilePath": "C:\\Users\\proat\\OneDrive\\Documents\\mio-modding-api\\TestMod\\TestMod.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\Cmdpro\\.nuget\\packages\\polyhook2.net\\1.1.3\\polyhook2.net.1.1.3.nupkg.sha512"
+    "C:\\Users\\proat\\.nuget\\packages\\polyhook2.net\\1.1.3\\polyhook2.net.1.1.3.nupkg.sha512"
   ],
   "logs": []
 }

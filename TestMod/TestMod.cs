@@ -15,24 +15,18 @@ namespace TestMod
         {
             Hooks();
         }
-        static X64Detour? fixedUpdateDetour;
-        private static unsafe void Hooks()
+        private unsafe void Hooks()
         {
-            delegate* unmanaged[Cdecl]<MioGame.Game*, void> fixedUpdateHook = &FixedUpdateHook;
-            fixedUpdateDetour = new X64Detour((ulong)MioGame.Game.Pointers.fixed_update, (ulong)fixedUpdateHook);
-            fixedUpdateDetour.Hook();
+            On.MioGame.On_Game.fixed_update.Prefix += Fixed_update_Prefix;
         }
-        [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-        private static unsafe void FixedUpdateHook(MioGame.Game* game)
+
+        private unsafe void Fixed_update_Prefix(ref MioGame.Game self)
         {
-            var mio = game->mio;
+            var mio = self.mio;
             if (mio.node != null && !mio.cutscene.active && !mio.walk_bot.active && mio.hook.state._value == MioGame.Mio.Hook.State.Inactive)
             {
                 mio.move_by_slide(new MioGame.Vec_float_3() { Base = new MioGame._vec_storage_float_3() { x = 0.1f } });
             }
-            ulong trampAddr = fixedUpdateDetour!.TrampolineAddress;
-            var originalFunc = (delegate* unmanaged[Cdecl]<MioGame.Game*, void>)trampAddr;
-            originalFunc(game);
         }
     }
 }

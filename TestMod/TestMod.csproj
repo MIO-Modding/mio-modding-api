@@ -18,6 +18,9 @@
     <Reference Include="MioModLoader">
       <HintPath>../lib/MioModLoader.dll</HintPath>
     </Reference>
+    <Reference Include="MioBinds">
+      <HintPath>../lib/MioBinds.dll</HintPath>
+    </Reference>
   </ItemGroup>
 	
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">

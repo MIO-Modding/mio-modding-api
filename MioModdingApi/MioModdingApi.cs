@@ -12,7 +12,7 @@ namespace MioModdingApi
 
         public override void Initialize()
         {
-            MioGame.MioGameModule.MioGameMemoryAddress = (ulong)ModLoader.mioMemoryAddress;
+            NativeMod.NativeModule.MemoryAddress = (ulong)ModLoader.mioMemoryAddress;
             LogMessage("Loaded Mio Modding Api");
         }
     }

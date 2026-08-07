@@ -9,6 +9,7 @@
       "TestMod/1.0.0": {
         "dependencies": {
           "PolyHook2.NET": "1.1.3",
+          "MioBinds": "1.0.0.0",
           "MioModdingApi": "1.0.0.0",
           "MioModLoader": "1.0.0.0"
         },
@@ -121,6 +122,14 @@
           }
         }
       },
+      "MioBinds/1.0.0.0": {
+        "runtime": {
+          "MioBinds.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
       "MioModdingApi/1.0.0.0": {
         "runtime": {
           "MioModdingApi.dll": {
@@ -151,6 +160,11 @@
       "sha512": "sha512-YllvSVfy5jtkO1HWHGhcIuG1DliIy5MLNCE4h6NTV2C95HDaJVlwUQyAjEjs45obOhxIdQ1M4FDriZYLh2L4XA==",
       "path": "polyhook2.net/1.1.3",
       "hashPath": "polyhook2.net.1.1.3.nupkg.sha512"
+    },
+    "MioBinds/1.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
     },
     "MioModdingApi/1.0.0.0": {
       "type": "reference",

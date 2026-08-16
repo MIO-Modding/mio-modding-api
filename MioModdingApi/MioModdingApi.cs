@@ -10,10 +10,12 @@ namespace MioModdingApi
         {
         }
 
-        public override void Initialize()
+        public unsafe override void Initialize()
         {
             NativeMod.NativeModule.MemoryAddress = (ulong)ModLoader.mioMemoryAddress;
             LogMessage("Loaded Mio Modding Api");
+            GinPatching.ApplyHooks();
         }
+
     }
 }

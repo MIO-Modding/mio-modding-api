@@ -20,9 +20,9 @@ namespace TestMod
             On.MioGame.On_Game.fixed_update.Prefix += Fixed_update_Prefix;
         }
 
-        private unsafe void Fixed_update_Prefix(ref MioGame.Game self)
+        private unsafe void Fixed_update_Prefix(MioGame.Game* __this)
         {
-            var mio = self.mio;
+            var mio = __this->mio;
             if (mio.node != null && !mio.cutscene.active && !mio.walk_bot.active && mio.hook.state._value == MioGame.Mio.Hook.State.Inactive)
             {
                 mio.move_by_slide(new MioGame.Vec_float_3() { Base = new MioGame._vec_storage_float_3() { x = 0.1f } });

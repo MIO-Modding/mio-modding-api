@@ -31,6 +31,9 @@ namespace MioModdingApi
             ginRead.read_header(true);
             origGinRead.read_header(true);
 
+            var ptr = (Gin_read*)NativeMemory.Alloc((nuint)sizeof(Gin_read));
+            ptr[0] = ginRead;
+
             Dictionary<int, GinPatch> lPatches = patches.GetValueOrDefault(Util.MioStringToString(origGinRead.path), new Dictionary<int, GinPatch>());
             for (uint i = 0; i < ginRead.header.section_count; i++)
             {
@@ -53,7 +56,7 @@ namespace MioModdingApi
                 };
 
                 int sectionIndex = origGinRead.find_section(&nameStr);
-                GinPatch ginPatch = new GinPatch(&ginRead, i, data.size);
+                GinPatch ginPatch = new GinPatch(ptr, i, data.size);
                 lPatches.TryAdd(sectionIndex, ginPatch);
             }
             if (!patches.TryAdd(Util.MioStringToString(origGinRead.path), lPatches))

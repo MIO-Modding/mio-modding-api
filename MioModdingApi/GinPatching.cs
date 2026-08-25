@@ -1,6 +1,7 @@
 ﻿using MioGame;
 using MioGame.Shader;
 using MioGame.std;
+using MioModLoader;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,7 @@ namespace MioModdingApi
 {
     public static class GinPatching
     {
+        public static event System.Action PatchGins;
         public static unsafe void ApplyHooks()
         {
             On.MioGame.On_Gin_read.read_section_data_1.Hook += Read_section_data_1_Hook;
@@ -20,13 +22,9 @@ namespace MioModdingApi
         public static unsafe void AddGinPatch(string file, string patch)
         {
 
-            IntPtr patchStr = Marshal.StringToHGlobalAnsi(patch);
-            var patchList = Array_unsigned_int.from_data((byte*)patchStr, (uint)patch.Length);
-            MioGame.String ginStr = MioGame.String.from_unicode_2(&patchList);
+            MioGame.String ginStr = Util.StringToMioString(patch);
 
-            IntPtr origStr = Marshal.StringToHGlobalAnsi(file);
-            var origList = Array_unsigned_int.from_data((byte*)origStr, (uint)file.Length);
-            MioGame.String origGinStr = MioGame.String.from_unicode_2(&origList);
+            MioGame.String origGinStr = Util.StringToMioString(file);
 
             Gin_read ginRead = Gin_read.from_file(&ginStr);
             Gin_read origGinRead = Gin_read.from_file(&origGinStr);
@@ -36,11 +34,26 @@ namespace MioModdingApi
             Dictionary<int, GinPatch> lPatches = patches.GetValueOrDefault(Util.MioStringToString(origGinRead.path), new Dictionary<int, GinPatch>());
             for (uint i = 0; i < ginRead.header.section_count; i++)
             {
-                var data = ginRead.sections[i];
-                var nameStr = data->name_string();
+                var data = ((Gin_section_header*)ginRead.sections.data.data)[i];
+                uint size = 0;
+                for (int j = 0; j < 64; j++)
+                {
+                    if (data.name[j] == 0x0)
+                    {
+                        break;
+                    }
+                    size++;
+                }
+                var nameStr = new MioGame.String()
+                {
+                    data = new Ptr() {
+                        data = (byte*)&data.name
+                    },
+                    size = size
+                };
 
-                int sectionIndex = origGinRead.find_section_1(&nameStr);
-                GinPatch ginPatch = new GinPatch(&ginRead, i, data->size);
+                int sectionIndex = origGinRead.find_section(&nameStr);
+                GinPatch ginPatch = new GinPatch(&ginRead, i, data.size);
                 lPatches.TryAdd(sectionIndex, ginPatch);
             }
             if (!patches.TryAdd(Util.MioStringToString(origGinRead.path), lPatches))
@@ -48,9 +61,9 @@ namespace MioModdingApi
                 patches[Util.MioStringToString(origGinRead.path)] = lPatches;
             }
         }
-        public static void PatchAllGins()
+        public static unsafe void PatchAllGins()
         {
-
+            PatchGins.Invoke();
         }
 
         public static bool PatchedGins;
@@ -66,11 +79,16 @@ namespace MioModdingApi
             {
                 if (__this->batcher.status == Gin_read_batcher.Status.Read_batching)
                 {
+                    ModLoader.LogMessage("1");
                     var batcher = __this->batcher;
+                    ModLoader.LogMessage("2");
                     uint next_subsection = batcher.next_subsection;
+                    ModLoader.LogMessage("3");
 
-                    bool is_bit_set = (((Ordered_gin_read*)batcher.ordered_reads.data.data[batcher.next_idx * sizeof(Ordered_gin_read)])->flags & Ordered_gin_read.Section_flags.Serialized) != 0;
+                    bool is_bit_set = (((Ordered_gin_read*)batcher.ordered_reads.data.data)[batcher.next_idx].flags & Ordered_gin_read.Section_flags.Serialized) != 0;
+                    ModLoader.LogMessage("4");
                     uint next;
+                    ModLoader.LogMessage("5");
                     if (!is_bit_set || next_subsection > 1)
                     {
                         batcher.next_idx = batcher.next_idx + 1;
@@ -79,7 +97,9 @@ namespace MioModdingApi
                     {
                         next = next_subsection + 1;
                     }
+                    ModLoader.LogMessage("6");
                     batcher.next_subsection = next;
+                    ModLoader.LogMessage("7");
                     __this->batcher = batcher;
                 }
                 GinPatch patch = patches[pathStr][(int)section_index];

@@ -1,4 +1,6 @@
-﻿using MioModLoader;
+﻿using MioGame;
+using MioModdingApi;
+using MioModLoader;
 using PolyHook2.API;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -7,17 +9,19 @@ namespace TestMod
 {
     public class TestMod : Mod
     {
-        public TestMod(Assembly assembly, string name, string id, string[] dependencies) : base(assembly, name, id, dependencies)
-        {
-        }
-
         public override void Initialize()
         {
             Hooks();
+            LogMessage(GetModFolderPath());
+            LogMessage(Path.Combine(GetModFolderPath(), "assets_override.gin"));
+            GinPatching.PatchGins += () =>
+            {
+                GinPatching.AddGinPatch("flamby/assets.gin", Path.Combine(GetModFolderPath(), "assets_override.gin"));
+            };
         }
         private unsafe void Hooks()
         {
-            On.MioGame.On_Game.fixed_update.Prefix += Fixed_update_Prefix;
+            //On.MioGame.On_Game.fixed_update.Prefix += Fixed_update_Prefix;
         }
 
         private unsafe void Fixed_update_Prefix(MioGame.Game* __this)

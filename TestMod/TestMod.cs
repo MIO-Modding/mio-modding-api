@@ -12,8 +12,6 @@ namespace TestMod
         public override void Initialize()
         {
             Hooks();
-            LogMessage(GetModFolderPath());
-            LogMessage(Path.Combine(GetModFolderPath(), "assets_override.gin"));
             GinPatching.PatchGins += () =>
             {
                 GinPatching.AddGinPatch("flamby/assets.gin", Path.Combine(GetModFolderPath(), "assets_override.gin"));

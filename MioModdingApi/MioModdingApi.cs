@@ -7,12 +7,26 @@ namespace MioModdingApi
 {
     public class MioModdingApi : Mod
     {
-        public unsafe override void Initialize()
+        public override unsafe void Initialize()
         {
             NativeMod.NativeModule.MemoryAddress = (ulong)ModLoader.MioMemoryAddress;
             LogMessage("Loaded Mio Modding Api");
             PatchChecksum();
             GinPatching.ApplyHooks();
+
+            //Apply log hook
+            On.MioGame.GlobalFunctions.platform.win32.On_entrypoint.main.Prefix += Main_Prefix;
+        }
+        private unsafe void Main_Prefix(int argc, sbyte** argv, sbyte** envp)
+        {
+            //This CANNOT be applied until the games entrypoint method is called so unfortunately anything before then is Gone
+            ModLoader.logOverride = new Action<string>((message) =>
+            {
+                MioGame.String* str = (MioGame.String*)Marshal.AllocHGlobal(Marshal.SizeOf<MioGame.String>());
+                str[0] = Util.StringToMioString(message + "\n");
+                MioGame.GlobalFunctions.core.win32_io.write_console(str, false, true);
+                Marshal.FreeHGlobal((nint)str);
+            });
         }
 
         [DllImport("kernel32.dll")]

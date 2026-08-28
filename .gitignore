@@ -34,5 +34,5 @@ latex/
 header.txt
 
 !*/lib/MioBinds.dll
-!TestMod/lib/mio-modding-api.dll
+!TestMod/lib/MioModdingApi.dll
 !*/lib/MioModLoader.dll

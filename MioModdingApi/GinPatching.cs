@@ -66,7 +66,8 @@ namespace MioModdingApi
         }
         public static unsafe void PatchAllGins()
         {
-            PatchGins.Invoke();
+            if (PatchGins != null)
+                PatchGins.Invoke();
         }
 
         public static bool PatchedGins;

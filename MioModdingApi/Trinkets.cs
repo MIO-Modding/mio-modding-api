@@ -67,7 +67,7 @@ namespace MioModdingApi
                 if (str != null)
                 {
                     List<string> strs = strings.ToList();
-                    strs.Insert(strs.IndexOf(str) + (i.Value.placement == Placement.AFTER ? 1 : 0), i.Value.id);
+                    strs.Insert(strs.IndexOf(str) + (i.Value.placement == Placement.AFTER ? 1 : 0), i.Value.id + "\0");
                     strings = strs.ToArray();
                 }
             }

@@ -22,11 +22,6 @@ namespace MioModdingApi
                 return mioStr;
             }
         }
-        public static unsafe MioGame.String* StringToMioStringPtr(string str)
-        {
-            MioGame.String ptr = StringToMioString(str);
-            return &ptr;
-        }
         public static unsafe string MioStringToString(MioGame.String mioStr)
         {
             return Marshal.PtrToStringUTF8((nint)mioStr.data.data, (int)mioStr.size);

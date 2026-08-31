@@ -14,6 +14,7 @@ namespace MioModdingApi
             PatchChecksum();
             GinPatching.ApplyHooks();
             Trinkets.ApplyHooks();
+            Localization.ApplyHooks();
 
             //Apply log hook
             On.MioGame.GlobalFunctions.platform.win32.On_entrypoint.main.Prefix += Main_Prefix;

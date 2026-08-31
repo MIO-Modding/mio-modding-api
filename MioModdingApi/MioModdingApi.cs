@@ -13,6 +13,7 @@ namespace MioModdingApi
             LogMessage("Loaded Mio Modding Api");
             PatchChecksum();
             GinPatching.ApplyHooks();
+            Trinkets.ApplyHooks();
 
             //Apply log hook
             On.MioGame.GlobalFunctions.platform.win32.On_entrypoint.main.Prefix += Main_Prefix;

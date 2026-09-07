@@ -17,7 +17,12 @@ public static class StringAllocator
     private static readonly Dictionary<string, nint> Strings = [];
 
     /// <summary>
-    /// Blocks of unmanaged memory used for allocating <see cref="String"/> instances and their <c>byte*</c> data.
+    /// Dictionary that maps static/permanent unmanaged <see cref="String"/> data pointers to their corresponding C# strings.
+    /// </summary>
+    private static readonly Dictionary<nint, string> StringsReverse = [];
+
+    /// <summary>
+    /// Blocks of unmanaged memory used for allocating static/permanent mod <see cref="String"/> instances and their <c>byte*</c> data.
     /// </summary>
     private static readonly List<StringBlock> Blocks = [];
 
@@ -32,9 +37,12 @@ public static class StringAllocator
     /// </summary>
     /// <param name="str">The C# <see cref="string"/> to get or create a <see cref="String"/> for.</param>
     /// <returns>A pointer to the allocated unmanaged <see cref="String"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="str"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">Thrown if <paramref name="str"/> is too large to allocate in a single 1MB block.</exception>
     /// <exception cref="InvalidOperationException">Thrown if the allocation fails for any reason.</exception>
-    public static unsafe String* GetString(string str) {
+    public static unsafe String* GetMioString(string str)
+    {
+        ArgumentNullException.ThrowIfNull(str);
         if (Strings.TryGetValue(str, out nint value))
         {
             return (String*)value;
@@ -43,26 +51,74 @@ public static class StringAllocator
         return CreateString(str);
     }
 
-    private static unsafe String* CreateString(string str) {
+    /// <inheritdoc cref="FromMioString(String)"/>
+    public static unsafe string? FromMioString(String* mioStr) {
+        return mioStr == null ? null : FromMioString(*mioStr);
+    }
+
+    /// <summary>
+    /// Converts an unmanaged <see cref="String"/> to a C# <see cref="string"/>.
+    /// If <paramref name="mioStr"/>'s <see cref="MioGame.String.is_static"/> field is not <c>0</c>, this will cache the resulting C# string.
+    /// </summary>
+    /// <param name="mioStr">The unmanaged <see cref="String"/> to convert.</param>
+    /// <returns>
+    /// The corresponding C# <see cref="string"/>,
+    /// or <see langword="null"/> if <paramref name="mioStr"/>'s data is <see langword="null"/>.
+    /// </returns>
+    public static unsafe string? FromMioString(String mioStr)
+    {
+        if (mioStr.data.data == null)
+        {
+            return null;
+        }
+
+        if (mioStr.size == 0)
+        {
+            return string.Empty;
+        }
+
+        nint ptr = (nint)mioStr.data.data;
+        if (mioStr.is_static == 0)
+        {
+            return Marshal.PtrToStringUTF8(ptr, (int)mioStr.size);
+        }
+
+        if (StringsReverse.TryGetValue(ptr, out string? value))
+        {
+            return value;
+        }
+
+        string result = Marshal.PtrToStringUTF8(ptr, (int)mioStr.size);
+        StringsReverse[ptr] = result;
+        return result;
+    }
+
+    private static unsafe String* CreateString(string str)
+    {
         if (!StringBlock.CanAllocateAny(str))
         {
             throw new ArgumentException("String is too large to allocate in a single 1MB block.", nameof(str));
         }
 
-        lock (Lock) {
+        lock (Lock)
+        {
             String* mioStr;
             // Attempt to allocate on an existing block first
             foreach (StringBlock block in Blocks)
             {
-                if (block.TryAllocString(str, out mioStr)) {
+                if (block.TryAllocString(str, out mioStr))
+                {
                     Strings[str] = (nint)mioStr;
+                    StringsReverse[(nint)mioStr] = str;
                     return mioStr;
                 }
             }
 
             StringBlock newBlock = AllocNewBlock();
-            if (newBlock.TryAllocString(str, out mioStr)) {
+            if (newBlock.TryAllocString(str, out mioStr))
+            {
                 Strings[str] = (nint)mioStr;
+                StringsReverse[(nint)mioStr] = str;
                 return mioStr;
             }
         }
@@ -86,6 +142,7 @@ public static class StringAllocator
 
         Blocks.Clear();
         Strings.Clear();
+        StringsReverse.Clear();
     }
 
     /// <summary>
@@ -197,6 +254,48 @@ public static class StringAllocator
         {
             const int mask = Alignment - 1;
             _offset = (_offset + mask) & ~mask;
+        }
+    }
+}
+
+public readonly unsafe struct TempString : IDisposable
+{
+    public readonly String MioString;
+    public readonly string? String;
+    private readonly byte* _buffer;
+    private readonly bool _allocated;
+
+    public TempString(string? value)
+    {
+        if (value is null)
+        {
+            return;
+        }
+
+        String = value;
+        _allocated = true;
+        int exactByteCount = checked(Encoding.UTF8.GetByteCount(value) + 1); // + 1 for null terminator
+        _buffer = (byte*)NativeMemory.Alloc((nuint)exactByteCount);
+
+        int byteCount = Encoding.UTF8.GetBytes(value, new Span<byte>(_buffer, exactByteCount));
+        _buffer[byteCount] = 0; // null-terminate
+
+        MioString = new String
+        {
+            data = new MioGame.Ptr
+            {
+                data = _buffer
+            },
+            size = (uint)byteCount,
+            is_static = 0
+        };
+    }
+
+    public void Dispose()
+    {
+        if (_allocated && _buffer != null)
+        {
+            NativeMemory.Free(_buffer);
         }
     }
 }

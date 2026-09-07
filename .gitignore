@@ -3,8 +3,8 @@ build/
 install/
 out/
 x64/
-*/obj/Debug
-*/obj/Release
+*/obj/
+*/bin/
 
 # Visual Studio
 .vs/

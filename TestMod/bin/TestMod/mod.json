@@ -1,0 +1,8 @@
+{
+    "id": "io.github.mio-modding.mio-modding-api.test-mod",
+    "name": "Test Mod",
+    "main": "TestMod.dll",
+    "dependencies": [
+        "io.github.mio-modding.mio-modding-api"
+    ]
+}

@@ -3,6 +3,8 @@ build/
 install/
 out/
 x64/
+*/obj/
+*/bin/
 
 # Visual Studio
 .vs/
@@ -30,3 +32,7 @@ latex/
 .vscode/
 *.code-workspace
 header.txt
+
+!*/lib/MioBinds.dll
+!TestMod/lib/MioModdingApi.dll
+!*/lib/MioModLoader.dll

@@ -5,7 +5,7 @@ namespace MioModdingApi;
 public static class StringExtensions
 {
     public static unsafe bool Equals(this String str, String* other) {
-        return str == (sbyte*)other;
+        return Util.MioStringToString(str) == Util.MioStringToString(other[0]);
     }
 
     public static unsafe bool Equals(this string? str, String* other)
@@ -14,7 +14,6 @@ public static class StringExtensions
         {
             return other == null || other->data.data == null;
         }
-        using TempString temp = new(str);
-        return temp.MioString == (sbyte*)other;
+        return str == Util.MioStringToString(other[0]);
     }
 }

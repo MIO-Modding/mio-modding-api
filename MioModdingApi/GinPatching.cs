@@ -14,8 +14,8 @@ namespace MioModdingApi
         public static Dictionary<string, Dictionary<int, GinPatch>> patches = [];
         public static unsafe void AddGinPatch(string file, string patch)
         {
-            using var ginStr = new TempString(file);
-            using var origGinStr = new TempString(patch);
+            using var ginStr = new TempString(patch);
+            using var origGinStr = new TempString(file);
 
             Gin_read ginRead = Gin_read.from_file(&ginStr.MioString);
             Gin_read origGinRead = Gin_read.from_file(&origGinStr.MioString);
@@ -80,16 +80,11 @@ namespace MioModdingApi
 
             if (self->batcher.status == Gin_read_batcher.Status.Read_batching)
             {
-                ModLoader.LogMessage("1");
                 ref Gin_read_batcher batcher = ref self->batcher;
-                ModLoader.LogMessage("2");
                 uint next_subsection = batcher.next_subsection;
-                ModLoader.LogMessage("3");
 
                 bool is_bit_set = (((Ordered_gin_read*)batcher.ordered_reads.data.data)[batcher.next_idx].flags & Ordered_gin_read.Section_flags.Serialized) != 0;
-                ModLoader.LogMessage("4");
                 uint next;
-                ModLoader.LogMessage("5");
                 if (!is_bit_set || next_subsection > 1)
                 {
                     batcher.next_idx += 1;
@@ -100,9 +95,7 @@ namespace MioModdingApi
                     next = next_subsection + 1;
                 }
 
-                ModLoader.LogMessage("6");
                 batcher.next_subsection = next;
-                ModLoader.LogMessage("7");
                 self->batcher = batcher;
             }
 

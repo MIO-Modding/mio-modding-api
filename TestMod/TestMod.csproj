@@ -22,8 +22,6 @@
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(os)' == Windows_NT">
 		<Exec Command="call &quot;$(ProjectDir)post-build.bat&quot; &quot;$(TargetPath)&quot; &quot;$(ProjectName)&quot;" />
 	</Target>
-    <Exec Command="call &quot;$(ProjectDir)post-build.bat&quot; &quot;$(TargetPath)&quot; &quot;$(ProjectName)&quot;" />
-  </Target>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(os)' == UNIX">
     <Exec Command="&quot;$(ProjectDir)post-build.sh&quot; &quot;$(TargetPath)&quot; &quot;$(ProjectName)&quot;" />

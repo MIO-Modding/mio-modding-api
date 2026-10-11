@@ -13,7 +13,7 @@ namespace MioModdingApi
         /// <summary>Registers the api's page. Called from the api's Initialize, so it is listed first.</summary>
         internal static void Register(MioModdingApi api)
         {
-            var page = ModMenu.RegisterMod(api, displayName: "Modding API", description: "Options for the Modding API itself.");
+            var page = ModMenu.RegisterMod(api, displayName: "Modding API", description: "Core API for modifying MIO.");
 
             debugMode = page.RegisterToggle("debug_mode", "Start in debug mode", defaultValue: false,
                 description: "Turns on the game's debug mode automatically, without the d-pad input. " +

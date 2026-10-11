@@ -34,7 +34,7 @@ namespace MioModdingApi
     /// page is shown or hidden: the detour is never visible. The game focuses rows by flag, so every
     /// screen change moves the hover itself.
     /// </summary>
-    internal static unsafe class ModMenuUi
+    internal static unsafe partial class ModMenuUi
     {
         private const int GamePage = (int)Ui_settings.Cat.Game;
         private const int ControllerPage = (int)Ui_settings.Cat.Controller;
@@ -59,7 +59,10 @@ namespace MioModdingApi
         private sealed class Menu
         {
             public ModMenuPage[] Pages = [];
-            public TNode_Row ModsRow;            // the "Mods" row on the Game page
+            public TNode_Row ModsRow;            // the "Mods" row on the Game page (fallback when there's no tab)
+            public TNode_Row Tab;                // the "Mods" tab in the left column, once created
+            public bool Previewing;              // the tab is hovered at tab level: mod list shown as a preview
+            public float PreviewFade;            // the preview's fade-in, driven by us (see DrivePreviewFade)
 
             public bool Built;
             public uint VanillaCount;            // slot 6's own rows, at the front of its buffer
@@ -103,6 +106,7 @@ namespace MioModdingApi
             On.MioGame.On_Ui_settings.pre_sim_update.Prefix += Pre_sim_update_Prefix;
             On.MioGame.On_Ui_settings.pre_sim_update.Suffix += Pre_sim_update_Suffix;
             On.MioGame.On_Ui_settings.open_confirm_window.Hook += Open_confirm_window_Hook;
+            ApplyTabHooks();
             On.MioGame.On_Ui_settings.apply_new_keyboard_mouse_binding.Hook += Apply_new_keyboard_mouse_binding_Hook;
             On.MioGame.On_Ui_settings.apply_new_button_binding.Hook += Apply_new_button_binding_Hook;
         }
@@ -326,6 +330,9 @@ namespace MioModdingApi
 
         private static void Pre_sim_update_Prefix(Ui_settings* self, Node2* n, float dt)
         {
+            // Settings builds its tabs on its first update; watch that to learn how to make ours.
+            if (!self->initialized) BeginTabCapture();
+
             // A goto row (mod-list entry or button) moves the hover as it's pressed, so note which one
             // it was beforehand.
             if (menus.TryGetValue((nint)self, out Menu? menu) && menu.Screen != Screen.Closed)
@@ -339,11 +346,12 @@ namespace MioModdingApi
             try
             {
                 ModMenu.PollValues();
+                EndTabCapture(self);
 
                 if (menus.TryGetValue((nint)self, out Menu? menu) && menu.Built)
                 {
                     FinishReset(self, menu);
-                    Navigate(self, menu);
+                    Navigate(self, menu, dt);
                     if (menu.Screen == Screen.ModPage) SyncChangedRows(self, menu);
                 }
 
@@ -356,11 +364,17 @@ namespace MioModdingApi
             }
         }
 
-        private static void Navigate(Ui_settings* self, Menu menu)
+        private static void Navigate(Ui_settings* self, Menu menu, float dt)
         {
             int previous = menu.LastPageOpened;
             int now = self->page_opened;
             menu.LastPageOpened = now;
+
+            if (menu.Tab.n != null && now < 0 && !self->exit)
+            {
+                UpdateTabLevel(self, menu, dt);
+                return;
+            }
 
             switch (menu.Screen)
             {
@@ -384,9 +398,18 @@ namespace MioModdingApi
                     }
                     else if (now == ControllerPage)
                     {
-                        Close(self, menu);
-                        GoTo(self, menu, GamePage);
-                        SetHover(menu.ModsRow);
+                        if (menu.Tab.n != null)
+                        {
+                            // Back to the tab bar, on the Mods tab, still previewing the list.
+                            GoTo(self, menu, -1);
+                            ReturnToTab(self, menu);
+                        }
+                        else
+                        {
+                            Close(self, menu);
+                            GoTo(self, menu, GamePage);
+                            SetHover(menu.ModsRow);
+                        }
                     }
                     else if (now == OpenModTarget && previous == HostPage)
                     {
@@ -830,7 +853,8 @@ namespace MioModdingApi
         {
             try
             {
-                if (menus.TryGetValue((nint)self, out Menu? menu) && menu.Screen != Screen.Closed)
+                // At tab level (our list only previewed) this is the game's own "Reset All": leave it be.
+                if (menus.TryGetValue((nint)self, out Menu? menu) && menu.Screen != Screen.Closed && self->page_opened >= 0)
                 {
                     if (menu.Screen == Screen.ModPage)
                     {

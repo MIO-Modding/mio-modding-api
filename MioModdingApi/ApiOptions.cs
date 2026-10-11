@@ -55,12 +55,13 @@ namespace MioModdingApi
             ref Metagame metagame = ref Globals.metagame;
             if (metagame.debug_enabled) return;
 
-            // The game only allows debug mode on installs that have its debug key, and the d-pad
-            // input respects that. So does this.
+            // The game only allows debug mode on installs with its debug key, and the d-pad input
+            // respects that. This option deliberately doesn't: mark it allowed first, in case
+            // enable_debug checks the flag itself.
             if (!metagame.debug_allowed)
             {
-                ModMenu.Log("debug mode isn't allowed on this install (no debug key), so it wasn't turned on");
-                return;
+                metagame.debug_allowed = true;
+                ModMenu.Log("debug mode wasn't allowed on this install (no debug key); allowing it");
             }
 
             MioGame.GlobalFunctions.game.metagame.enable_debug();

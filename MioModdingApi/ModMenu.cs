@@ -170,6 +170,22 @@ namespace MioModdingApi
             return Add(new ButtonOption(this, id, title, description, onPressed));
         }
 
+        /// <summary>
+        /// A hotkey: a keyboard key or mouse button plus a controller button, shown as the game's own
+        /// binding rows and rebound the same way. Read it each frame with
+        /// <see cref="KeybindOption.WasPressed"/> or <see cref="KeybindOption.IsDown"/>. It may share
+        /// keys with the game's controls (both react). Give a default key or a default mouse button,
+        /// not both; any of them may be left unbound.
+        /// </summary>
+        public KeybindOption RegisterKeybind(string id, string title,
+            MioGame.Key defaultKey = MioGame.Key.Key_dummy,
+            MioGame.Gamepad_button defaultButton = MioGame.Gamepad_button.Btn_none,
+            MioGame.Mouse_button defaultMouseButton = MioGame.Mouse_button.Mouse_none,
+            string? description = null)
+        {
+            return Add(new KeybindOption(this, id, title, description, defaultKey, defaultMouseButton, defaultButton));
+        }
+
         /// <summary>Puts every option on this page back to its default and saves.</summary>
         public void ResetToDefaults()
         {

@@ -4,6 +4,17 @@ using System.Text.Json.Nodes;
 
 namespace MioModdingApi
 {
+    /// <summary>How an option appears in Settings.</summary>
+    internal enum ModMenuRowKind
+    {
+        /// <summary>One choice row (toggle, choice, number).</summary>
+        Choice,
+        /// <summary>One goto row that runs code (button).</summary>
+        Button,
+        /// <summary>A keyboard/mouse binding row followed by a controller binding row (keybind).</summary>
+        Keybind,
+    }
+
     /// <summary>
     /// A setting shown on a mod's page. Every option is stored as an index into its list of values:
     /// the game's Settings rows write the selected index straight into native memory owned by the
@@ -36,6 +47,9 @@ namespace MioModdingApi
 
         /// <summary>False for rows that hold no value (buttons): nothing to poll, save or reset.</summary>
         internal virtual bool HasValue => true;
+
+        /// <summary>Which kind of Settings row(s) the option is shown as.</summary>
+        internal virtual ModMenuRowKind RowKind => ModMenuRowKind.Choice;
 
         internal abstract int DefaultIndex { get; }
 
@@ -109,7 +123,7 @@ namespace MioModdingApi
         }
 
         /// <summary>Picks up a change the Settings row wrote into <see cref="Cell"/>.</summary>
-        internal void PollNative()
+        internal virtual void PollNative()
         {
             if (!HasValue) return;
             int index = ReadIndex();
@@ -121,14 +135,14 @@ namespace MioModdingApi
         }
 
         /// <summary>A throwing handler must not break the Settings hook that noticed the change.</summary>
-        private void NotifyChanged()
+        private protected void NotifyChanged()
         {
             try { RaiseChanged(); }
             catch (Exception ex) { ModMenu.Log($"a Changed handler for {Page.ModId}/{Id} threw: {ex}"); }
         }
 
         /// <summary>Puts the option back to its default value and saves.</summary>
-        public void ResetToDefault()
+        public virtual void ResetToDefault()
         {
             if (HasValue) SetIndex(DefaultIndex, save: true);
         }
@@ -333,6 +347,7 @@ namespace MioModdingApi
         }
 
         internal override bool HasValue => false;
+        internal override ModMenuRowKind RowKind => ModMenuRowKind.Button;
         internal override string[] ValueKeys => [];
         internal override int DefaultIndex => 0;
 

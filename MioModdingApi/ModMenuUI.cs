@@ -66,6 +66,8 @@ namespace MioModdingApi
             public uint TotalCount;              // everything in the buffer, ours included
             public View ModList;
             public View[] ModPages = [];
+            public ModMenuOption[][] PageRows = [];   // per mod page, the option behind each row
+            public string?[][] PageRowDescriptions = [];   // per mod page, each row's description
 
             public Screen Screen;
             public int OpenPage = -1;
@@ -101,6 +103,8 @@ namespace MioModdingApi
             On.MioGame.On_Ui_settings.pre_sim_update.Prefix += Pre_sim_update_Prefix;
             On.MioGame.On_Ui_settings.pre_sim_update.Suffix += Pre_sim_update_Suffix;
             On.MioGame.On_Ui_settings.open_confirm_window.Hook += Open_confirm_window_Hook;
+            On.MioGame.On_Ui_settings.apply_new_keyboard_mouse_binding.Hook += Apply_new_keyboard_mouse_binding_Hook;
+            On.MioGame.On_Ui_settings.apply_new_button_binding.Hook += Apply_new_button_binding_Hook;
         }
 
         // ============================================================ build
@@ -170,31 +174,64 @@ namespace MioModdingApi
 
             // One screen per mod. Pushes can move the buffer, so each row is configured right away.
             var modPages = new View[menu.Pages.Length];
+            var pageRows = new ModMenuOption[menu.Pages.Length][];
+            var pageRowDescriptions = new string?[menu.Pages.Length][];
             for (int p = 0; p < menu.Pages.Length; p++)
             {
                 uint start = host->widget_list.count;
+                var rowOptions = new List<ModMenuOption>();
+                var rowDescriptions = new List<string?>();
                 foreach (ModMenuOption option in menu.Pages[p].Options)
                 {
-                    if (option is ButtonOption)
+                    switch (option.RowKind)
                     {
-                        // Same trick as the mod list: a goto whose jump is caught (see Navigate).
-                        Widget* button = AddGoto(host, option.TitleKey, OpenModTarget, start);
-                        button->description = *StringAllocator.GetMioString(option.DescriptionKey);
-                        continue;
+                        case ModMenuRowKind.Button:
+                            {
+                                // Same trick as the mod list: a goto whose jump is caught (see Navigate).
+                                Widget* button = AddGoto(host, option.TitleKey, OpenModTarget, start);
+                                button->description = *StringAllocator.GetMioString(option.DescriptionKey);
+                                rowOptions.Add(option);
+                                rowDescriptions.Add(option.Description);
+                                break;
+                            }
+                        case ModMenuRowKind.Keybind:
+                            {
+                                // The game's own binding rows, both pointing at the option's binding.
+                                var keybind = (KeybindOption)option;
+                                Widget* keys = AddKeyBinding(host, keybind.TitleKey, keybind.Binding, start);
+                                keys->description = *StringAllocator.GetMioString(keybind.KeyboardDescriptionKey);
+                                Widget* pad = AddButtonBinding(host, keybind.ControllerTitleKey, keybind.Binding, start);
+                                pad->description = *StringAllocator.GetMioString(option.DescriptionKey);
+                                keybinds[(nint)keybind.Binding] = keybind;
+                                rowOptions.Add(option);
+                                rowOptions.Add(option);
+                                rowDescriptions.Add(keybind.KeyboardDescription);
+                                rowDescriptions.Add(option.Description);
+                                break;
+                            }
+                        default:
+                            {
+                                Widget* row = AddChoice(host, seed, option.TitleKey, option.ValueKeys, option.DescriptionKey, start);
+                                if (option.IsToggle) row->p_bool = (bool*)option.Cell;
+                                else row->p_choice = option.Cell;
+                                row->current_choice = option.Index;
+                                rowOptions.Add(option);
+                                rowDescriptions.Add(option.Description);
+                                break;
+                            }
                     }
-
-                    Widget* row = AddChoice(host, seed, option.TitleKey, option.ValueKeys, option.DescriptionKey, start);
-                    if (option.IsToggle) row->p_bool = (bool*)option.Cell;
-                    else row->p_choice = option.Cell;
-                    row->current_choice = option.Index;
                 }
                 modPages[p] = new View(start, host->widget_list.count - start);
+                pageRows[p] = rowOptions.ToArray();
+                pageRowDescriptions[p] = rowDescriptions.ToArray();
             }
 
             menu.VanillaCount = vanillaCount;
             menu.TotalCount = host->widget_list.count;
             menu.ModList = modList;
             menu.ModPages = modPages;
+            menu.PageRows = pageRows;
+            menu.PageRowDescriptions = pageRowDescriptions;
 
             Widget* all = Rows(host->widget_list);
             foreach (View view in modPages.Prepend(modList))
@@ -246,6 +283,24 @@ namespace MioModdingApi
             var values = (MioGame.String*)row->choices.data.data;
             for (int i = 0; i < valueKeys.Length; i++) values[i] = *StringAllocator.GetMioString(valueKeys[i]);
             return row;
+        }
+
+        /// <summary>The game's keyboard/mouse binding row (built by init_page's &lt;lambda_4&gt;).</summary>
+        private static Widget* AddKeyBinding(Ui_settings.Page* page, string nameKey, Input_state.Binding* binding, uint screenStart)
+        {
+            Ui_settings.Page* pagePtr = page;
+            Vec_float_3 screenBase = ScreenBase(screenStart), step = increment;
+            var add = new Ui_settings__init_page___lambda_4 { page = &pagePtr, base_pos = &screenBase, increment = &step };
+            return add.OperatorInvoke(StringAllocator.GetMioString(nameKey), binding);
+        }
+
+        /// <summary>The game's controller binding row (built by init_page's &lt;lambda_3&gt;, as on Remap gamepad).</summary>
+        private static Widget* AddButtonBinding(Ui_settings.Page* page, string nameKey, Input_state.Binding* binding, uint screenStart)
+        {
+            Ui_settings.Page* pagePtr = page;
+            Vec_float_3 screenBase = ScreenBase(screenStart), step = increment;
+            var add = new Ui_settings__init_page___lambda_3 { page = &pagePtr, base_pos = &screenBase, increment = &step };
+            return add.OperatorInvoke(StringAllocator.GetMioString(nameKey), binding);
         }
 
         private static Widget* AddGoto(Ui_settings.Page* page, string nameKey, int targetPage, uint screenStart)
@@ -367,9 +422,9 @@ namespace MioModdingApi
                         // A button was selected: stay on this page and run it.
                         GoTo(self, menu, HostPage);
                         int index = menu.HoveredBeforeUpdate;
-                        IReadOnlyList<ModMenuOption> options = menu.Pages[menu.OpenPage].Options;
+                        ModMenuOption[] options = menu.PageRows[menu.OpenPage];
                         Refocus(self, menu, Math.Max(index, 0));
-                        if (index >= 0 && index < options.Count && options[index] is ButtonOption button)
+                        if (index >= 0 && index < options.Length && options[index] is ButtonOption button)
                         {
                             button.Press();
                         }
@@ -422,7 +477,7 @@ namespace MioModdingApi
 
             SetVisible(rows, view.Count, true);
             FixDividers(rows, view.Count);
-            if (screen == Screen.ModPage) SyncRows(rows, menu.Pages[page]);
+            if (screen == Screen.ModPage) SyncRows(rows, menu.PageRows[page]);
 
             FitAboveDescription(host, menu, screen, page);
 
@@ -438,7 +493,7 @@ namespace MioModdingApi
                 // flag, so the panel would keep its placeholder text. Set it for the focused row.
                 string? description = screen == Screen.ModList
                     ? menu.Pages[hover].Description
-                    : menu.Pages[page].Options[hover].Description;
+                    : menu.PageRowDescriptions[page][hover];
                 SetDescription(host, description);
             }
 
@@ -459,7 +514,7 @@ namespace MioModdingApi
             for (int p = 0; p < HostPage; p++) ClearHover(Rows(Pages(self)[p].widget_list), Pages(self)[p].widget_list.count);
             SetHover(rows[index].node);
 
-            if (menu.Screen == Screen.ModPage) SetDescription(host, menu.Pages[menu.OpenPage].Options[index].Description);
+            if (menu.Screen == Screen.ModPage) SetDescription(host, menu.PageRowDescriptions[menu.OpenPage][index]);
         }
 
         /// <summary>
@@ -514,26 +569,28 @@ namespace MioModdingApi
         // ============================================================ values
 
         /// <summary>Shows each option's current value on its row.</summary>
-        private static void SyncRows(Widget* rows, ModMenuPage page)
+        private static void SyncRows(Widget* rows, ModMenuOption[] rowOptions)
         {
-            for (int i = 0; i < page.Options.Count; i++)
+            for (int i = 0; i < rowOptions.Length; i++)
             {
-                if (!page.Options[i].HasValue) continue;
-                rows[i].current_choice = page.Options[i].Index;
-                page.Options[i].RowNeedsSync = false;
+                ModMenuOption option = rowOptions[i];
+                if (option.RowKind != ModMenuRowKind.Choice) continue;
+                rows[i].current_choice = option.Index;
+                option.RowNeedsSync = false;
             }
         }
 
         /// <summary>Redraws rows whose value was changed from code while the page is open.</summary>
         private static void SyncChangedRows(Ui_settings* self, Menu menu)
         {
-            ModMenuPage page = menu.Pages[menu.OpenPage];
+            ModMenuOption[] rowOptions = menu.PageRows[menu.OpenPage];
             Widget* rows = Rows(Host(self)->widget_list);
-            for (int i = 0; i < page.Options.Count; i++)
+            for (int i = 0; i < rowOptions.Length; i++)
             {
-                if (!page.Options[i].RowNeedsSync) continue;
-                rows[i].current_choice = page.Options[i].Index;
-                page.Options[i].RowNeedsSync = false;
+                ModMenuOption option = rowOptions[i];
+                if (option.RowKind != ModMenuRowKind.Choice || !option.RowNeedsSync) continue;
+                rows[i].current_choice = option.Index;
+                option.RowNeedsSync = false;
             }
         }
 
@@ -629,7 +686,7 @@ namespace MioModdingApi
 
             IEnumerable<string?> descriptions = screen == Screen.ModList
                 ? menu.Pages.Select(p => p.Description)
-                : menu.Pages[page].Options.Select(o => o.Description);
+                : menu.PageRowDescriptions[page];
 
             float fontSize = text != null && text->font_size > 0 ? text->font_size : 30f;
             float maxWidth = text != null && text->max_width > 0 ? text->max_width : 900f;
@@ -674,6 +731,88 @@ namespace MioModdingApi
                 }
             }
             return lines;
+        }
+
+        // ============================================================ keybinds
+
+        /// <summary>Every keybind row built so far, by the native binding it points at.</summary>
+        private static readonly Dictionary<nint, KeybindOption> keybinds = [];
+
+        // When a binding row is rebound, the game resolves conflicts with its own controls:
+        //  - apply_new_keyboard_mouse_binding clears that key or mouse button from every row on the
+        //    Keyboard page (slot 3), i.e. it would unbind the player's own controls;
+        //  - apply_new_button_binding swaps buttons with the other controller rows in slot 6's current
+        //    list, which on our screens is the other hotkeys on the same mod page.
+        // Mod hotkeys are allowed to share keys with the game. So for our rows the game's function
+        // still writes the new binding, but every other binding it can reach is put back afterwards.
+
+        private static void Apply_new_keyboard_mouse_binding_Hook(On.MioGame.On_Ui_settings.orig_apply_new_keyboard_mouse_binding orig,
+            Ui_settings* self, Widget* widget, Input_state.Binding newBinding)
+        {
+            if (!TryGetKeybind(widget, out KeybindOption? keybind))
+            {
+                orig(self, widget, newBinding);
+                return;
+            }
+
+            using var guard = new BindingGuard(self, widget);
+            orig(self, widget, newBinding);
+            keybind.ApplyKeyboardMouse(newBinding.key_primary, newBinding.mouse_btn);
+        }
+
+        private static void Apply_new_button_binding_Hook(On.MioGame.On_Ui_settings.orig_apply_new_button_binding orig,
+            Ui_settings* self, Widget* widget, Input_state.Binding newBinding)
+        {
+            if (!TryGetKeybind(widget, out KeybindOption? keybind))
+            {
+                orig(self, widget, newBinding);
+                return;
+            }
+
+            using var guard = new BindingGuard(self, widget);
+            orig(self, widget, newBinding);
+            keybind.ApplyButton(newBinding.gamepad_button);
+        }
+
+        private static bool TryGetKeybind(Widget* widget, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out KeybindOption? keybind)
+        {
+            keybind = null;
+            return widget != null && widget->p_key_binding != null && keybinds.TryGetValue((nint)widget->p_key_binding, out keybind);
+        }
+
+        /// <summary>
+        /// Snapshots every binding the game's conflict resolution can reach (the Keyboard page's rows
+        /// and slot 6's current rows), except the one being rebound, and restores them on dispose.
+        /// </summary>
+        private readonly struct BindingGuard : IDisposable
+        {
+            private readonly List<(nint binding, Input_state.Binding value)> saved;
+
+            public BindingGuard(Ui_settings* self, Widget* rebound)
+            {
+                saved = [];
+                Save(Pages(self)[(int)Ui_settings.Cat.Keyboard].widget_list, rebound->p_key_binding);
+                Save(Host(self)->widget_list, rebound->p_key_binding);
+            }
+
+            private void Save(WidgetArray list, Input_state.Binding* skip)
+            {
+                Widget* rows = Rows(list);
+                for (uint i = 0; i < list.count; i++)
+                {
+                    Input_state.Binding* binding = rows[i].p_key_binding;
+                    if (binding == null || binding == skip) continue;
+                    saved.Add(((nint)binding, *binding));
+                }
+            }
+
+            public void Dispose()
+            {
+                foreach ((nint binding, Input_state.Binding value) in saved)
+                {
+                    *(Input_state.Binding*)binding = value;
+                }
+            }
         }
 
         // ============================================================ reset to default

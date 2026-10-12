@@ -4,14 +4,21 @@ namespace MioModdingApi
 {
     public class MioModdingApi : Mod
     {
+        /// <summary>The loaded api mod, for its config folder and logging.</summary>
+        internal static MioModdingApi? Instance { get; private set; }
+
         public override unsafe void Initialize()
         {
+            Instance = this;
             NativeMod.NativeModule.MemoryAddress = (ulong)ModLoader.MioMemoryAddress;
             LogMessage("Loaded Mio Modding Api");
             PatchChecksum();
             GinPatching.ApplyHooks();
             Trinkets.ApplyHooks();
             Localization.ApplyHooks();
+            ModMenu.ApplyHooks();
+            ApiOptions.ApplyHooks();
+            ApiOptions.Register(this);
 
             //Apply log hook
             On.MioGame.GlobalFunctions.platform.win32.On_entrypoint.main.Prefix += Main_Prefix;

@@ -202,15 +202,21 @@ namespace MioModdingApi
                             {
                                 // The game's own binding rows, both pointing at the option's binding.
                                 var keybind = (KeybindOption)option;
-                                Widget* keys = AddKeyBinding(host, keybind.TitleKey, keybind.Binding, start);
-                                keys->description = *StringAllocator.GetMioString(keybind.KeyboardDescriptionKey);
-                                Widget* pad = AddButtonBinding(host, keybind.ControllerTitleKey, keybind.Binding, start);
-                                pad->description = *StringAllocator.GetMioString(option.DescriptionKey);
+                                if (keybind.HasKeyboard)
+                                {
+                                    Widget* keys = AddKeyBinding(host, keybind.TitleKey, keybind.Binding, start);
+                                    keys->description = *StringAllocator.GetMioString(keybind.KeyboardDescriptionKey);
+                                    rowOptions.Add(option);
+                                    rowDescriptions.Add(keybind.KeyboardDescription);
+                                }
+                                if (keybind.HasController)
+                                {
+                                    Widget* pad = AddButtonBinding(host, keybind.TitleKey, keybind.Binding, start);
+                                    pad->description = *StringAllocator.GetMioString(keybind.ControllerDescriptionKey);
+                                    rowOptions.Add(option);
+                                    rowDescriptions.Add(keybind.ControllerDescription);
+                                }
                                 keybinds[(nint)keybind.Binding] = keybind;
-                                rowOptions.Add(option);
-                                rowOptions.Add(option);
-                                rowDescriptions.Add(keybind.KeyboardDescription);
-                                rowDescriptions.Add(option.Description);
                                 break;
                             }
                         default:
@@ -338,6 +344,7 @@ namespace MioModdingApi
             if (menus.TryGetValue((nint)self, out Menu? menu) && menu.Screen != Screen.Closed)
             {
                 menu.HoveredBeforeUpdate = HoveredIndex(Host(self)->widget_list);
+                if (menu.Screen == Screen.ModPage) ClearListeningControllerRow(self);
             }
         }
 
@@ -795,6 +802,31 @@ namespace MioModdingApi
             using var guard = new BindingGuard(self, widget);
             orig(self, widget, newBinding);
             keybind.ApplyButton(newBinding.gamepad_button);
+        }
+
+        /// <summary>
+        /// Delete while one of our controller rows is listening: clear its button and stop listening,
+        /// as the game does once a button is captured. The game's controller capture only looks at the
+        /// pad, so the keyboard press reaches us untouched; it's consumed here so nothing else sees it.
+        /// </summary>
+        private static void ClearListeningControllerRow(Ui_settings* self)
+        {
+            if (!self->listening_input || self->widget_opened < 0) return;
+
+            Ui_settings.Page* host = Host(self);
+            if ((uint)self->widget_opened >= host->widget_list.count) return;
+
+            Widget* row = &Rows(host->widget_list)[self->widget_opened];
+            if (row->kind != Widget.Kind.Button_binding || !TryGetKeybind(row, out KeybindOption? keybind)) return;
+
+            ref Input_btn delete = ref Globals.input.game.kb.keys.keys.data[(int)KeybindOption.ClearKey];
+            if (!delete.pressed) return;
+
+            delete.pressed = false;
+            keybind.ClearButton();
+            self->listening_input = false;
+            self->widget_opened = -1;
+            Globals.audio.game.play_sfx_ui(Sfx_ui.MainMenu_validate);
         }
 
         private static bool TryGetKeybind(Widget* widget, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out KeybindOption? keybind)

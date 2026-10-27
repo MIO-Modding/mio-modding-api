@@ -177,13 +177,17 @@ namespace MioModdingApi
         /// keys with the game's controls (both react). Give a default key or a default mouse button,
         /// not both; any of them may be left unbound.
         /// </summary>
+        /// <param name="keyboard">Show the keyboard/mouse row. Without it, no key or mouse button can be bound.</param>
+        /// <param name="controller">Show the controller row. Without it, no controller button can be bound.</param>
         public KeybindOption RegisterKeybind(string id, string title,
             MioGame.Key defaultKey = MioGame.Key.Key_dummy,
             MioGame.Gamepad_button defaultButton = MioGame.Gamepad_button.Btn_none,
             MioGame.Mouse_button defaultMouseButton = MioGame.Mouse_button.Mouse_none,
-            string? description = null)
+            string? description = null,
+            bool keyboard = true,
+            bool controller = true)
         {
-            return Add(new KeybindOption(this, id, title, description, defaultKey, defaultMouseButton, defaultButton));
+            return Add(new KeybindOption(this, id, title, description, defaultKey, defaultMouseButton, defaultButton, keyboard, controller));
         }
 
         /// <summary>Puts every option on this page back to its default and saves.</summary>

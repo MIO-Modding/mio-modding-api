@@ -6,9 +6,10 @@ using Binding = MioGame.Input_state.Binding;
 namespace MioModdingApi
 {
     /// <summary>
-    /// A hotkey: one keyboard key or mouse button, plus one controller button. Shown as two of the
-    /// game's own binding rows (keyboard/mouse, then controller), which the player rebinds exactly
-    /// like the game's controls. Hotkeys may share keys with the game's controls; both then react.
+    /// A hotkey: one keyboard key or mouse button, plus one controller button. Shown as the game's
+    /// own binding rows (keyboard/mouse, then controller; either can be left out), which the player
+    /// rebinds exactly like the game's controls, and clears with Delete. Hotkeys may share keys with
+    /// the game's controls; both then react.
     /// </summary>
     /// <example>
     /// <code>
@@ -31,46 +32,67 @@ namespace MioModdingApi
         /// <summary>Raised whenever the binding changes, from Settings or from code.</summary>
         public event Action<KeybindOption>? Changed;
 
-        /// <summary>Loca id for the controller row's title.</summary>
-        internal string ControllerTitleKey { get; }
+        /// <summary>True if the keyboard/mouse row is shown and a key or mouse button can be bound.</summary>
+        public bool HasKeyboard { get; }
 
-        /// <summary>Pressing this while the keyboard/mouse row is listening clears it instead of binding it.</summary>
+        /// <summary>True if the controller row is shown and a controller button can be bound.</summary>
+        public bool HasController { get; }
+
+        /// <summary>
+        /// Pressing this while either binding row is listening clears that row instead of binding it.
+        /// On the controller row it's the keyboard's Delete, since every spare pad button is bindable.
+        /// </summary>
         public const Key ClearKey = Key.Key_delete;
 
         private const string ClearHint = "While rebinding, press Delete to clear.";
+        private const string ControllerClearHint = "While rebinding, press Delete on the keyboard to clear.";
 
-        /// <summary>The keyboard/mouse row's description: the option's own, plus how to clear it.</summary>
+        /// <summary>Each row's description: which input it binds, the option's own text, and how to clear it.</summary>
         internal string KeyboardDescription { get; }
+        internal string ControllerDescription { get; }
 
-        /// <summary>Loca id for <see cref="KeyboardDescription"/>.</summary>
+        /// <summary>Loca ids for <see cref="KeyboardDescription"/> and <see cref="ControllerDescription"/>.</summary>
         internal string KeyboardDescriptionKey { get; }
+        internal string ControllerDescriptionKey { get; }
 
         internal KeybindOption(ModMenuPage page, string id, string title, string? description,
-            Key defaultKey, Mouse_button defaultMouse, Gamepad_button defaultButton)
+            Key defaultKey, Mouse_button defaultMouse, Gamepad_button defaultButton, bool keyboard, bool controller)
             : base(page, id, title, description)
         {
+            if (!keyboard && !controller)
+            {
+                throw new ArgumentException("A keybind needs a keyboard row, a controller row, or both.", nameof(keyboard));
+            }
             if (defaultKey != Key.Key_dummy && defaultMouse != Mouse_button.Mouse_none)
             {
                 throw new ArgumentException("A keybind's default is a key or a mouse button, not both.", nameof(defaultMouse));
             }
 
-            DefaultKey = defaultKey;
-            DefaultMouseButton = defaultMouse;
-            DefaultButton = defaultButton;
+            HasKeyboard = keyboard;
+            HasController = controller;
 
-            ControllerTitleKey = TitleKey + ".CONTROLLER";
-            Localization.AddString(ControllerTitleKey, title + " (Controller)");
+            // A side that isn't shown can't be bound, so its default is dropped.
+            DefaultKey = keyboard ? defaultKey : Key.Key_dummy;
+            DefaultMouseButton = keyboard ? defaultMouse : Mouse_button.Mouse_none;
+            DefaultButton = controller ? defaultButton : Gamepad_button.Btn_none;
 
-            KeyboardDescription = string.IsNullOrEmpty(description) ? ClearHint : description + "\n" + ClearHint;
+            KeyboardDescription = RowDescription("(Keyboard)", description, ClearHint);
             KeyboardDescriptionKey = TitleKey + ".KEYBOARD_DESCRIPTION";
             Localization.AddString(KeyboardDescriptionKey, KeyboardDescription);
 
+            ControllerDescription = RowDescription("(Controller)", description, ControllerClearHint);
+            ControllerDescriptionKey = TitleKey + ".CONTROLLER_DESCRIPTION";
+            Localization.AddString(ControllerDescriptionKey, ControllerDescription);
+
             Binding = (Binding*)NativeMemory.AllocZeroed((nuint)sizeof(Binding));
-            Write(defaultKey, defaultMouse, defaultButton);
+            Write(DefaultKey, DefaultMouseButton, DefaultButton);
             known = *Binding;
         }
 
-        /// <summary>The bound keyboard key, or <c>Key_dummy</c> if none (or a mouse button is bound instead).</summary>
+        private static string RowDescription(string device, string? description, string hint) =>
+            string.IsNullOrEmpty(description) ? $"{device} {hint}" : $"{device} {description}\n{hint}";
+
+        /// <summary>The bound keyboard key, or <c>Key_dummy</c> if none, a mouse button is bound instead, or there's no keyboard row.</summary>
         public Key Key
         {
             get => Binding->key_primary;
@@ -84,7 +106,7 @@ namespace MioModdingApi
             set => Set(value != Mouse_button.Mouse_none ? Key.Key_dummy : Binding->key_primary, value, Binding->gamepad_button);
         }
 
-        /// <summary>The bound controller button, or <c>Btn_none</c> if none.</summary>
+        /// <summary>The bound controller button, or <c>Btn_none</c> if none (always, without a controller row).</summary>
         public Gamepad_button Button
         {
             get => Binding->gamepad_button;
@@ -130,9 +152,9 @@ namespace MioModdingApi
 
         private void Write(Key key, Mouse_button mouse, Gamepad_button button)
         {
-            Binding->key_primary = key;
-            Binding->mouse_btn = mouse;
-            Binding->gamepad_button = button;
+            Binding->key_primary = HasKeyboard ? key : Key.Key_dummy;
+            Binding->mouse_btn = HasKeyboard ? mouse : Mouse_button.Mouse_none;
+            Binding->gamepad_button = HasController ? button : Gamepad_button.Btn_none;
             Binding->key_secondary = Key.Key_dummy;
         }
 
@@ -180,6 +202,12 @@ namespace MioModdingApi
         internal void ApplyButton(Gamepad_button button)
         {
             if (button != Gamepad_button.Btn_none) Binding->gamepad_button = button;
+        }
+
+        /// <summary>Unbinds the controller button (Delete on a listening controller row).</summary>
+        internal void ClearButton()
+        {
+            Binding->gamepad_button = Gamepad_button.Btn_none;
         }
 
         private protected override void RaiseChanged() => Changed?.Invoke(this);

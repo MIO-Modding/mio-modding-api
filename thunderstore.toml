@@ -1,0 +1,29 @@
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "MIOModding"
+name = "ModdingAPI"
+versionNumber = "2.0.3"
+description = "Core Modding API for MIO: Memories in Orbit"
+websiteUrl = "https://github.com/MIO-Modding/mio-modding-api"
+containsNsfwContent = false
+[package.dependencies]
+
+[build]
+icon = "./icon.png"
+readme = "./README.md"
+outdir = "./build"
+
+[[build.copy]]
+source = "./MioModdingApi/bin/MioModdingApi"
+target = ""
+
+
+[publish]
+repository = "https://thunderstore.io"
+communities = [ "mio-memories-in-orbit", ]
+[publish.categories]
+mio-memories-in-orbit = []
+
+

@@ -1,4 +1,5 @@
 ﻿using MioGame;
+using System.Diagnostics;
 
 namespace MioModdingApi
 {
@@ -8,7 +9,9 @@ namespace MioModdingApi
     internal static class ApiOptions
     {
         private static ToggleOption? debugMode;
+        private static ButtonOption? openMods;
         private static bool startupApplied;
+        private static string modsPath = "";
 
         /// <summary>Registers the api's page. Called from the api's Initialize, so it is listed first.</summary>
         internal static void Register(MioModdingApi api)
@@ -24,6 +27,11 @@ namespace MioModdingApi
             {
                 if (enabled) EnableDebug();
             };
+
+            modsPath = AppContext.BaseDirectory + "mods\\";
+            openMods = page.RegisterButton("open_mods", "Open mods folder",
+                description: "Opens the mods folder in your filesystem.");
+            openMods.Pressed += OpenMods_Pressed;
         }
 
         internal static unsafe void ApplyHooks()
@@ -66,6 +74,20 @@ namespace MioModdingApi
 
             MioGame.GlobalFunctions.game.metagame.enable_debug();
             ModMenu.Log($"debug mode turned on (debug_enabled={metagame.debug_enabled})");
+        }
+
+        private static void OpenMods_Pressed()
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo()
+                {
+                    FileName = modsPath,
+                    UseShellExecute = true,
+                    Verb = "open"
+                });
+            }
+            catch (Exception ex) { ModMenu.Log("could not open mods folder: " + ex); }
         }
     }
 }

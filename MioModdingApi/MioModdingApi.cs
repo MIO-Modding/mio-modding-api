@@ -20,17 +20,8 @@ namespace MioModdingApi
             ApiOptions.ApplyHooks();
             ApiOptions.Register(this);
 
-            //Apply log hook
-            On.MioGame.GlobalFunctions.platform.win32.On_entrypoint.main.Prefix += Main_Prefix;
-        }
-        private static unsafe void Main_Prefix(int argc, sbyte** argv, sbyte** envp)
-        {
-            //This CANNOT be applied until the games entrypoint method is called so unfortunately anything before then is Gone
-            ModLoader.logOverride = message =>
-            {
-                using TempString str = new(message + "\n");
-                MioGame.GlobalFunctions.core.win32_io.write_console(&str.MioString, false, true);
-            };
+            // Loader and mod log lines into the game's log file (the loader handles the window).
+            GameLogFile.ApplyHooks();
         }
 
         [DllImport("kernel32.dll", SetLastError = true)]
